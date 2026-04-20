@@ -1,0 +1,1 @@
+function s(r,t=280){if(!r)return"";const e=r.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,"").replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi,"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();return e.length<=t?e:`${e.slice(0,t)}…`}export{s};
