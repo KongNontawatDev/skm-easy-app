@@ -37,7 +37,7 @@ async function runCustomerAuthEnsure(
     if (isCustomerAccessTokenValid()) return
 
     const refresh = getCustomerRefreshToken()
-    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
+    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
     const root = base.replace(/\/$/, '')
 
     if (refresh) {
@@ -158,7 +158,7 @@ function CustomerAccessRefreshTicker() {
         if (isCustomerAccessTokenValid()) return
         const rt = getCustomerRefreshToken()
         if (!rt) return
-        const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
+        const base = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
         const root = base.replace(/\/$/, '')
         try {
           const res = await axios.post<{ success: boolean; data: { accessToken: string } }>(

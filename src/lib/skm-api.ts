@@ -4,7 +4,7 @@
 import axios, { isAxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { clearCustomerSession, setCustomerAccessToken, getCustomerRefreshToken } from '@/lib/customer-session'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
 
 /** ngrok free อาจคืนหน้าเตือน HTML แทน JSON — ส่ง header นี้เพื่อข้ามและได้ response จริงของ API */
 function isNgrokTunnelApiUrl(url: string): boolean {
