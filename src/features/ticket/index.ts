@@ -1,0 +1,5 @@
+export { Ticket } from './ticket-page'
+export { TicketHistory } from './history'
+export { TicketDetail } from './ticket-detail'
+export type { SupportTicket } from './types'
+export { ticketImageList } from './types'

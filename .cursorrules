@@ -1,0 +1,242 @@
+# SKM Easy App - Cursor Rules
+
+## Project Overview
+This is a Thai mobile-first React application for car installment management. It's built with React 19, TypeScript, Vite, TanStack Router, TanStack Query, and Tailwind CSS.
+
+## Tech Stack
+- **Frontend**: React 19 + TypeScript + Vite
+- **Routing**: TanStack Router
+- **State Management**: TanStack Query + React Context + Zustand
+- **Styling**: Tailwind CSS + Radix UI
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod
+- **Animations**: Framer Motion
+- **Build**: Vite + SWC
+
+## Architecture Patterns
+
+### Feature-Based Structure
+```
+src/features/{feature-name}/
+├── api/                    # API services
+├── components/             # Feature-specific components
+├── hooks/                  # Feature-specific hooks
+├── types/                  # TypeScript types
+├── data/                   # Mock data
+└── index.ts               # Exports
+```
+
+### Component Structure
+- Use functional components with TypeScript
+- Export components as named exports
+- Use PascalCase for component names
+- Use camelCase for hooks and utilities
+
+## Coding Standards
+
+### TypeScript
+- Use `import type` for type-only imports
+- Define interfaces for all props and data structures
+- Use strict type checking
+- Avoid `any` type - use `unknown` or specific types
+- Use type assertions only when necessary
+
+### React Patterns
+- Use React 19 features (use hook, etc.)
+- Prefer function declarations over arrow functions for components
+- Use custom hooks for reusable logic
+- Use React.memo for performance optimization when needed
+- Use useCallback and useMemo for expensive operations
+
+### API Integration
+- Use TanStack Query for all data fetching
+- Create separate query and mutation hooks
+- Use mock API service for development
+- Implement proper error handling and loading states
+
+### Styling
+- Use Tailwind CSS utility classes
+- Follow mobile-first responsive design
+- Use consistent spacing scale (4, 8, 12, 16, 20, 24, 32, 40, 48, 64)
+- Use design system colors and typography
+- Prefer composition over custom CSS
+
+### File Naming
+- Components: PascalCase (e.g., `ContractCard.tsx`)
+- Hooks: camelCase with `use` prefix (e.g., `useSearch.ts`)
+- Utilities: camelCase (e.g., `formatDate.ts`)
+- Types: PascalCase (e.g., `Contract.ts`)
+- Pages: kebab-case (e.g., `contract-page.tsx`)
+
+## Thai Language Support
+- All user-facing text should be in Thai
+- Use proper Thai typography and spacing
+- Follow Thai UI/UX conventions
+- Use appropriate Thai date/time formatting
+
+## Mobile-First Design
+- Design for mobile devices first
+- Use touch-friendly interface elements
+- Implement proper mobile navigation patterns
+- Optimize for thumb navigation
+- Use appropriate font sizes for mobile reading
+
+## Component Guidelines
+
+### Mobile Components
+- Use `MobileLayout` for page structure
+- Use `MobileHeader` for page headers
+- Use `MobileContent` for main content areas
+- Use `BottomNavigation` for navigation
+- Use `MobileCard` for content containers
+- Use `MobileButton` for interactive elements
+
+### Form Components
+- Use React Hook Form for all forms
+- Implement proper validation with Zod
+- Use consistent form styling
+- Provide clear error messages in Thai
+- Use appropriate input types for mobile
+
+### Data Display
+- Use skeleton loaders for loading states
+- Implement empty states with helpful messages
+- Use proper error boundaries
+- Show loading indicators for async operations
+
+## API Patterns
+
+### Query Hooks
+```typescript
+// Pattern for query hooks
+export function use{FeatureName}(params?: QueryParams) {
+  return useApiQueryList(
+    'resource-name',
+    params,
+    () => ApiService.getData(params)
+  )
+}
+```
+
+### Mutation Hooks
+```typescript
+// Pattern for mutation hooks
+export function use{Action}{FeatureName}() {
+  return useApiMutation<ResponseType, RequestType>(
+    (data) => ApiService.performAction(data),
+    {
+      onSuccess: (data) => {
+        // Handle success
+      },
+      onError: (error) => {
+        // Handle error
+      }
+    }
+  )
+}
+```
+
+## Error Handling
+- Use error boundaries for component errors
+- Implement proper API error handling
+- Show user-friendly error messages in Thai
+- Log errors for debugging
+- Provide fallback UI for error states
+
+## Performance
+- Use code splitting for routes
+- Implement lazy loading for components
+- Optimize images and assets
+- Use React.memo for expensive components
+- Implement proper caching strategies
+
+## Testing
+- Write unit tests for utilities and hooks
+- Test component behavior and interactions
+- Mock API calls in tests
+- Test error scenarios
+- Ensure accessibility compliance
+
+## Accessibility
+- Use semantic HTML elements
+- Implement proper ARIA labels
+- Ensure keyboard navigation
+- Use appropriate color contrast
+- Support screen readers
+
+## Security
+- Validate all user inputs
+- Sanitize data before display
+- Use HTTPS for all API calls
+- Implement proper authentication
+- Follow security best practices
+
+## Code Quality
+- Follow ESLint rules strictly
+- Use Prettier for code formatting
+- Write self-documenting code
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Keep functions small and focused
+
+## Git Workflow
+- Use conventional commits
+- Write descriptive commit messages
+- Use feature branches
+- Review code before merging
+- Keep commits atomic and focused
+
+## Development Guidelines
+- Use TypeScript strict mode
+- Enable all ESLint rules
+- Use Prettier for formatting
+- Run type checking before commits
+- Test on multiple devices and browsers
+- Follow mobile-first development approach
+
+## Common Patterns
+
+### Page Component Structure
+```typescript
+export function FeaturePage() {
+  const { data, isLoading, error } = useFeatureData()
+  
+  if (isLoading) return <LoadingSpinner />
+  if (error) return <ErrorMessage error={error} />
+  
+  return (
+    <MobileLayout>
+      <MobileHeader title="Page Title" />
+      <MobileContent>
+        {/* Page content */}
+      </MobileContent>
+      <BottomNavigation currentPath="/feature" />
+    </MobileLayout>
+  )
+}
+```
+
+### API Service Structure
+```typescript
+export class FeatureApiService {
+  static async getData(params?: QueryParams) {
+    return MockApiService.get<DataType>('/endpoint', params)
+  }
+  
+  static async createData(data: CreateDataType) {
+    return MockApiService.post<DataType>('/endpoint', data)
+  }
+}
+```
+
+## Best Practices
+- Always use TypeScript types
+- Implement proper error handling
+- Use consistent naming conventions
+- Follow mobile-first design principles
+- Write clean, readable code
+- Test thoroughly before deployment
+- Document complex logic
+- Use appropriate design patterns
+- Optimize for performance
+- Ensure accessibility compliance
