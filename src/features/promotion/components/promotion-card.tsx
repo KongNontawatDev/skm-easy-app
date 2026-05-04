@@ -1,12 +1,34 @@
 import { Calendar } from 'lucide-react'
 import type { PromotionListItem } from '../types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface PromotionCardProps {
-  promotion: PromotionListItem
-  onViewDetail: (promotionId: string) => void
+  promotion?: PromotionListItem
+  onViewDetail?: (promotionId: string) => void
+  isLoading?: boolean
 }
 
-export function PromotionCard({ promotion, onViewDetail }: PromotionCardProps) {
+export function PromotionCard({ promotion, onViewDetail, isLoading }: PromotionCardProps) {
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-2xl bg-white dark:bg-gray-800">
+        <Skeleton className="h-48 w-full" />
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-6 w-3/4" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!promotion) return null
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—'
     const date = new Date(dateString)
@@ -25,22 +47,22 @@ export function PromotionCard({ promotion, onViewDetail }: PromotionCardProps) {
       className={`relative cursor-pointer overflow-hidden rounded-2xl bg-white transition-all duration-200 dark:bg-gray-800 ${
         isExpired ? 'opacity-60' : ''
       }`}
-      onClick={() => onViewDetail(promotion.id)}
+      onClick={() => onViewDetail?.(promotion.id)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onViewDetail(promotion.id)
+          onViewDetail?.(promotion.id)
         }
       }}
     >
-      <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
+      <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-700">
         {promotion.imageUrl ? (
           <img
             src={promotion.imageUrl}
             alt={promotion.title}
-            className="h-full w-full object-cover"
+            className="w-full h-auto"
             loading="lazy"
           />
         ) : null}

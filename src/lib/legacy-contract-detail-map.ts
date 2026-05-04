@@ -1,9 +1,5 @@
-/**
- * แปลงแถวจาก legacy SQL (GET /me/contracts/:ref และงวด) เป็นรูปแบบที่ UI เดิมใช้
- * ชื่อคอลัมน์ยืดหยุ่นตาม SQL ที่ตั้งใน env ของ API
- */
 import type { ContractCard } from '@/features/home/types'
-import type { ContractData, PaymentData } from '@/lib/mock-data'
+import type { ContractData, PaymentData } from '@/types/billing'
 
 function str(v: unknown, fallback = ''): string {
   return v === undefined || v === null ? fallback : String(v)
@@ -18,41 +14,59 @@ function num(v: unknown, fallback = 0): number {
   return fallback
 }
 
+function firstText(values: unknown[], fallback = ''): string {
+  for (const value of values) {
+    const text = str(value).trim()
+    if (text && text !== '---' && text !== '—') return text
+  }
+  return fallback
+}
+
+function unwrapContractDetail(row: Record<string, unknown>): Record<string, unknown> {
+  const detail = row.detail
+  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+    return detail as Record<string, unknown>
+  }
+  return row
+}
+
 function isRowEmpty(row: Record<string, unknown>): boolean {
   return Object.keys(row).length === 0
 }
 
-/** ดึงเลขอ้างอิงสัญญาจากแถวรายละเอียด */
 export function contractRefFromDetailRow(row: Record<string, unknown>, fallback: string): string {
+  const source = unwrapContractDetail(row)
   return str(
-    row.contractRef ??
-      row.contract_ref ??
-      row.contractNumber ??
-      row.contract_no ??
-      row.CONT_NO ??
-      row.cont_no ??
+    source.contractRef ??
+      source.contract_ref ??
+      source.contractNumber ??
+      source.contract_no ??
+      source.CONT_NO ??
+      source.cont_no ??
       fallback,
   )
 }
 
-/**
- * แปลงแถวเดียวจาก `/me/contracts/{ref}` → ContractData (ถ้าไม่มีข้อมูลพอ return null)
- */
 export function mapLegacyContractDetailToContractData(
   row: Record<string, unknown>,
   contractRefFromUrl: string,
 ): ContractData | null {
-  if (isRowEmpty(row)) return null
+  const source = unwrapContractDetail(row)
+  if (isRowEmpty(source)) return null
+
   const contractRefResolved = str(
-    row.contractRef ?? row.contract_ref ?? row.contractref ?? contractRefFromUrl,
+    source.contractRef ?? source.contract_ref ?? source.contractref ?? contractRefFromUrl,
     contractRefFromUrl,
   )
   const contractNumber = str(
-    row.contractNumber ?? row.contract_no ?? row.contno ?? contractRefFromDetailRow(row, contractRefFromUrl),
+    source.contractNumber ??
+      source.contract_no ??
+      source.contno ??
+      contractRefFromDetailRow(source, contractRefFromUrl),
   )
-  if (!String(contractRefResolved).trim()) return null
+  if (!contractRefResolved.trim()) return null
 
-  const statusRaw = str(row.status ?? row.contract_status, 'active').toLowerCase()
+  const statusRaw = str(source.status ?? source.contract_status, 'active').toLowerCase()
   const status: ContractData['contractInfo']['status'] =
     statusRaw === 'overdue' || statusRaw === 'ค้าง'
       ? 'overdue'
@@ -61,57 +75,96 @@ export function mapLegacyContractDetailToContractData(
         : 'active'
 
   const vehicleImage = str(
-    row.imageUrl ?? row.vehicle_image ?? row.image_url ?? row.vehicleImage ?? '',
+    source.imageUrl ?? source.vehicle_image ?? source.image_url ?? source.vehicleImage ?? '',
   )
+  const monthlyPayment =
+    num(source.monthlyPayment ?? source.monthly_payment ?? source.installmentAmount ?? source.install_amt) +
+    num(source.installmentVatAmount)
+  const term = num(source.totalTerms ?? source.term ?? source.term_months ?? source.install_count, 0)
 
   return {
     id: contractRefResolved,
     contractNumber: contractNumber || contractRefFromUrl.replace(/^[^:]+:/, ''),
     vehicleInfo: {
-      brand: str(row.brand ?? row.vehicle_brand ?? '—'),
-      model: str(row.model ?? row.vehicle_model ?? '—'),
-      year: num(row.year ?? row.vehicle_year, new Date().getFullYear()),
-      color: str(row.color ?? row.vehicle_color ?? '—'),
-      plateNumber: str(row.plateNumber ?? row.plate_no ?? row.plate ?? row.license_plate ?? '—'),
+      brand: firstText([source.brand, source.vehicle_brand, source.BRAND], '—'),
+      model: firstText(
+        [source.modelDescription, source.model, source.vehicle_model, source.MODEL, source.modelCode],
+        '—',
+      ),
+      year: num(source.year ?? source.vehicle_year ?? source.CARYEAR, new Date().getFullYear()),
+      color: firstText([source.colorDescription, source.color, source.vehicle_color, source.COLOR, source.colorCode], '—'),
+      plateNumber: firstText(
+        [source.plateNumber, source.plate_no, source.plate, source.license_plate, source.LICNO],
+        '—',
+      ),
       imageUrl: vehicleImage ? vehicleImage : '',
+      engineNumber: firstText(
+        [source.engineNumber, source.engine_no, source.engineNo, source.engineno, source.ENGNO, source.ENGINE_NO],
+        '',
+      ),
+      chassisNumber: firstText(
+        [source.chassisNumber, source.chassis_no, source.chassisNo, source.frameno, source.FRAME_NO, source.CHASNO],
+        '',
+      ),
+      taxDueDate: firstText(
+        [source.taxDueDate, source.tax_due_date, source.vehicleTaxDueDate, source.tax_expire_date, source.TAXDUE],
+        '',
+      ),
+      taxPaymentDueDate: firstText(
+        [
+          source.taxPaymentDueDate,
+          source.tax_payment_due_date,
+          source.vehicleTaxPaymentDueDate,
+          source.tax_pay_due_date,
+          source.TAXPAYDUE,
+        ],
+        '',
+      ),
     },
     customerInfo: {
-      name: str(row.customerName ?? row.cus_name ?? row.name ?? row.CUS_NAME ?? '—'),
-      phone: str(row.phone ?? row.tel ?? row.mobile ?? row.cus_tel ?? '—'),
-      email: str(row.email ?? row.cus_email ?? ''),
-      address: str(row.address ?? row.cus_addr ?? ''),
-      taxId: str(row.taxId ?? row.tax_id ?? row.id_no ?? ''),
+      name: firstText(
+        [source.customerName, source.cus_name, source.name, source.CUS_NAME],
+        '—',
+      ),
+      phone: firstText(
+        [source.customerPhone, source.phone, source.tel, source.mobile, source.cus_tel],
+        '—',
+      ),
+      email: str(source.customerEmail ?? source.email ?? source.cus_email ?? ''),
+      address: str(source.customerAddress ?? source.address ?? source.cus_addr ?? ''),
+      taxId: str(source.taxId ?? source.tax_id ?? source.id_no ?? source.CIDNUM ?? ''),
     },
     financialInfo: {
-      totalAmount: num(row.totalAmount ?? row.total_amt ?? row.TOTAL_AMT),
-      downPayment: num(row.downPayment ?? row.down_payment),
-      loanAmount: num(row.loanAmount ?? row.loan_amt ?? row.finance_amt),
-      monthlyPayment: num(row.monthlyPayment ?? row.monthly_payment ?? row.install_amt),
-      interestRate: num(row.interestRate ?? row.interest_rate),
-      remainingAmount: num(row.remainingAmount ?? row.remaining_amount ?? row.balance),
-      term: num(row.term ?? row.term_months ?? row.install_count, 0),
+      totalAmount: num(source.totalAmount ?? source.carAmount ?? source.total_amt ?? source.TOTAL_AMT),
+      downPayment: num(source.downPayment ?? source.down_payment),
+      loanAmount: num(source.loanAmount ?? source.financeAmount ?? source.loan_amt ?? source.finance_amt),
+      monthlyPayment,
+      interestRate: num(source.interestRate ?? source.interest_rate),
+      remainingAmount: num(
+        source.outstandingBalance ?? source.remainingAmount ?? source.remaining_amount ?? source.balance,
+      ),
+      term,
     },
     contractInfo: {
-      startDate: str(row.startDate ?? row.start_date ?? row.CONT_START ?? new Date().toISOString()),
-      endDate: str(row.endDate ?? row.end_date ?? row.CONT_END ?? new Date().toISOString()),
-      term: num(row.term ?? row.term_months ?? row.install_count, 0),
+      startDate: str(source.startDate ?? source.applicationDate ?? source.start_date ?? source.CONT_START ?? new Date().toISOString()),
+      endDate: str(source.endDate ?? source.lastDueDate ?? source.end_date ?? source.CONT_END ?? new Date().toISOString()),
+      term,
       status,
     },
-    progress: Math.min(100, Math.max(0, num(row.progress ?? row.paid_percent, 0))),
+    progress: Math.min(100, Math.max(0, num(source.progress ?? source.paid_percent, 0))),
     nextPaymentDate: str(
-      row.nextPaymentDate ?? row.next_due_date ?? row.nextDueDate ?? new Date().toISOString().slice(0, 10),
+      source.nextPaymentDate ?? source.next_due_date ?? source.nextDueDate ?? new Date().toISOString().slice(0, 10),
     ),
-    createdAt: str(row.createdAt ?? row.created_at ?? new Date().toISOString()),
+    createdAt: str(source.createdAt ?? source.created_at ?? new Date().toISOString()),
   }
 }
 
-/** แปลงรายการงวดจาก `/me/contracts/:ref/installments` */
 export function mapLegacyInstallmentsToPayments(
   rows: Record<string, unknown>[],
   contractNo: string,
 ): PaymentData[] {
   return rows.map((row, index) => {
-    const id = str(row.id ?? row.install_id ?? `inst-${index}`)
+    const id = str(row.id ?? row.installmentRef ?? row.install_id ?? `inst-${index}`)
     const installmentNo = num(
       row.installmentNo ??
         row.install_no ??
@@ -122,22 +175,24 @@ export function mapLegacyInstallmentsToPayments(
         index + 1,
       index + 1,
     )
-    const amount = num(row.amount ?? row.amt ?? row.PAY_AMT ?? row.install_amt)
+    const amount = num(row.amount ?? row.dueAmount ?? row.amt ?? row.PAY_AMT ?? row.install_amt)
     const dueRaw = row.dueDate ?? row.due_date ?? row.DUE_DT ?? row.pay_date
     const dueDate = str(dueRaw, new Date().toISOString().slice(0, 10))
 
     let status: PaymentData['status'] = 'pending'
-    const paidRaw =
-      row.paid ?? row.PAID ?? row.is_paid ?? row.paidStatus ?? row.PAIDSTATUS ?? row.status
-    const paid =
-      paidRaw === true ||
-      paidRaw === 1 ||
-      paidRaw === '1' ||
-      paidRaw === 'Y' ||
-      String(paidRaw).toLowerCase() === 'paid'
-    if (paid) status = 'paid'
-    else if (new Date(dueDate) < new Date(new Date().toDateString()) && status === 'pending') {
-      status = 'overdue'
+    const explicitStatus = str(row.status ?? row.paidStatus ?? row.PAIDSTATUS).toLowerCase()
+    if (explicitStatus === 'paid' || explicitStatus === 'overdue' || explicitStatus === 'pending') {
+      status = explicitStatus
+    } else {
+      const paidRaw = row.paid ?? row.PAID ?? row.is_paid
+      const paid =
+        paidRaw === true ||
+        paidRaw === 1 ||
+        paidRaw === '1' ||
+        paidRaw === 'Y' ||
+        String(paidRaw).toLowerCase() === 'paid'
+      if (paid) status = 'paid'
+      else if (new Date(dueDate) < new Date(new Date().toDateString())) status = 'overdue'
     }
 
     return {
@@ -145,13 +200,17 @@ export function mapLegacyInstallmentsToPayments(
       contractNo,
       installmentNo,
       amount,
+      balanceAmount: num(row.balanceAmount ?? row.balance_amount ?? row.OUTSBAL, amount),
+      paidAmount: num(row.paidAmount ?? row.paid_amount ?? row.PAIDAMT),
+      lateFee: num(row.lateFee ?? row.late_fee ?? row.FINEAMT),
+      collectionFee: num(row.collectionFee ?? row.collection_fee ?? row.FOLLOWAMT),
+      otherFees: num(row.otherFees ?? row.other_fees ?? row.OTHERAMT),
       dueDate,
       status,
     }
   })
 }
 
-/** ข้อมูลความคืบหน้างวดสำหรับ `InstallmentProgress` — สอดคล้องกับ mockContractProgressData */
 export function deriveInstallmentProgressFromPayments(
   payments: PaymentData[],
   card: ContractCard | null,
@@ -161,6 +220,7 @@ export function deriveInstallmentProgressFromPayments(
   nextDueDate: string
   installmentIndex: number
   totalInstallments: number
+  nextAmount: number
 } | null {
   if (!payments.length) {
     if (!card) return null
@@ -185,5 +245,6 @@ export function deriveInstallmentProgressFromPayments(
     nextDueDate,
     installmentIndex: paidPayments.length,
     totalInstallments: payments.length,
+    nextAmount: next?.amount ?? 0,
   }
 }

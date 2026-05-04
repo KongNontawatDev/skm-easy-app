@@ -3,6 +3,7 @@ import { MobileLayout, MobileHeader, MobileContent, BottomNavigation } from '@/c
 import { PromotionCard } from './components/promotion-card'
 import { fetchPublicPromotions } from '@/lib/cms-public-api'
 import { useRouter } from '@tanstack/react-router'
+import { ErrorState } from '@/components/shared/error-state'
 
 export function Promotion() {
   const router = useRouter()
@@ -21,17 +22,17 @@ export function Promotion() {
       <MobileContent className="pb-20">
         <div className="space-y-6">
           {isLoading ? (
-            <p className="py-10 text-center text-sm text-gray-500">กำลังโหลดโปรโมชั่น…</p>
+            <div className="grid grid-cols-1 gap-4">
+              {[1, 2, 3].map((i) => (
+                <PromotionCard key={i} isLoading={true} />
+              ))}
+            </div>
           ) : isError ? (
-            <div className="py-10 text-center text-sm text-red-600">
-              <p>โหลดข้อมูลไม่สำเร็จ</p>
-              <button
-                type="button"
-                className="mt-2 text-[#EC1B2E] underline"
-                onClick={() => void refetch()}
-              >
-                ลองอีกครั้ง
-              </button>
+            <div className="py-10">
+              <ErrorState
+                title="โหลดโปรโมชั่นไม่สำเร็จ"
+                onRetry={() => void refetch()}
+              />
             </div>
           ) : promotions.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">

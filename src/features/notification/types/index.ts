@@ -10,8 +10,10 @@ export interface Notification {
   relatedType?: RelatedType
   createdAt: string
   updatedAt: string
-  actionUrl?: string
-  actionText?: string
+  actionUrl1?: string
+  actionText1?: string
+  actionUrl2?: string
+  actionText2?: string
 }
 
 export type NotificationType = 'payment' | 'promotion' | 'system' | 'reminder' | 'alert'

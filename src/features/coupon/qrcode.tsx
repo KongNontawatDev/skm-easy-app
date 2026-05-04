@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useRouter, useSearch } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { 
   MobileLayout, 
   MobileHeader, 
@@ -8,11 +8,10 @@ import {
   MobileButton
 } from '@/components/mobile'
 import { QrCode, Camera, X, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
-import { mockCoupons } from './data/mock-data'
+import type { Coupon } from './types'
 
 export function CouponQRCode() {
   const router = useRouter()
-  const search = useSearch({ from: '/coupon/qrcode' })
   const [isScanning, setIsScanning] = useState(false)
   const [scannedCode, setScannedCode] = useState<string | null>(null)
   const [isValid, setIsValid] = useState<boolean | null>(null)
@@ -20,7 +19,8 @@ export function CouponQRCode() {
   const [isExpired, setIsExpired] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const coupon = (search as { couponId?: string }).couponId ? mockCoupons.find(c => c.id === (search as { couponId: string }).couponId) : null
+  // TODO: เรียกข้อมูลคูปองจาก API จริง
+  const coupon = undefined as Coupon | undefined
 
   // Countdown timer
   useEffect(() => {
@@ -81,10 +81,9 @@ export function CouponQRCode() {
     const mockQRCode = coupon?.qrCode || 'COUPON-001-2024'
     setScannedCode(mockQRCode)
     
-    // Simulate validation
+    // TODO: เรียก API จริงเพื่อตรวจสอบคูปอง
     setTimeout(() => {
-      const foundCoupon = mockCoupons.find(c => c.qrCode === mockQRCode)
-      setIsValid(!!foundCoupon)
+      setIsValid(false)
     }, 1000)
   }
 

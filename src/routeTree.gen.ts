@@ -15,12 +15,15 @@ import { Route as RefinanceCheckRouteImport } from './routes/refinance-check'
 import { Route as PromotionRouteImport } from './routes/promotion'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OtpRouteImport } from './routes/otp'
+import { Route as LiffCallbackRouteImport } from './routes/liff-callback'
 import { Route as CreditCheckRouteImport } from './routes/credit-check'
 import { Route as ContactSupportRouteImport } from './routes/contact-support'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AppErrorRouteImport } from './routes/app-error'
+import { Route as R500RouteImport } from './routes/500'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TicketIndexRouteImport } from './routes/ticket/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as PromotionIndexRouteImport } from './routes/promotion/index'
 import { Route as NotificationIndexRouteImport } from './routes/notification/index'
 import { Route as InstallmentIndexRouteImport } from './routes/installment/index'
@@ -29,6 +32,7 @@ import { Route as CouponIndexRouteImport } from './routes/coupon/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as TicketHistoryRouteImport } from './routes/ticket/history'
 import { Route as TicketIdRouteImport } from './routes/ticket/$id'
+import { Route as SettingsPrivacyPolicyRouteImport } from './routes/settings/privacy-policy'
 import { Route as ReceiptContractIdRouteImport } from './routes/receipt/$contractId'
 import { Route as PromotionIdRouteImport } from './routes/promotion/$id'
 import { Route as NotificationIdRouteImport } from './routes/notification/$id'
@@ -76,6 +80,11 @@ const OtpRoute = OtpRouteImport.update({
   path: '/otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiffCallbackRoute = LiffCallbackRouteImport.update({
+  id: '/liff-callback',
+  path: '/liff-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreditCheckRoute = CreditCheckRouteImport.update({
   id: '/credit-check',
   path: '/credit-check',
@@ -96,6 +105,11 @@ const AppErrorRoute = AppErrorRouteImport.update({
   path: '/app-error',
   getParentRoute: () => rootRouteImport,
 } as any)
+const R500Route = R500RouteImport.update({
+  id: '/500',
+  path: '/500',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -105,6 +119,11 @@ const TicketIndexRoute = TicketIndexRouteImport.update({
   id: '/ticket/',
   path: '/ticket/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const PromotionIndexRoute = PromotionIndexRouteImport.update({
   id: '/',
@@ -145,6 +164,11 @@ const TicketIdRoute = TicketIdRouteImport.update({
   id: '/ticket/$id',
   path: '/ticket/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsPrivacyPolicyRoute = SettingsPrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const ReceiptContractIdRoute = ReceiptContractIdRouteImport.update({
   id: '/receipt/$contractId',
@@ -229,15 +253,17 @@ const InstallmentContractIdRoute = InstallmentContractIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/500': typeof R500Route
   '/app-error': typeof AppErrorRoute
   '/contact': typeof ContactRoute
   '/contact-support': typeof ContactSupportRoute
   '/credit-check': typeof CreditCheckRoute
+  '/liff-callback': typeof LiffCallbackRoute
   '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/promotion': typeof PromotionRouteWithChildren
   '/refinance-check': typeof RefinanceCheckRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/blog/$id': typeof BlogIdRoute
   '/contract/$id': typeof ContractIdRoute
@@ -250,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/notification/$id': typeof NotificationIdRoute
   '/promotion/$id': typeof PromotionIdRoute
   '/receipt/$contractId': typeof ReceiptContractIdRoute
+  '/settings/privacy-policy': typeof SettingsPrivacyPolicyRoute
   '/ticket/$id': typeof TicketIdRoute
   '/ticket/history': typeof TicketHistoryRoute
   '/blog': typeof BlogIndexRoute
@@ -258,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/installment': typeof InstallmentIndexRoute
   '/notification': typeof NotificationIndexRoute
   '/promotion/': typeof PromotionIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/ticket': typeof TicketIndexRoute
   '/installment/contract/$id': typeof InstallmentContractIdRoute
   '/installment/pay/$id': typeof InstallmentPayIdRoute
@@ -267,14 +295,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/500': typeof R500Route
   '/app-error': typeof AppErrorRoute
   '/contact': typeof ContactRoute
   '/contact-support': typeof ContactSupportRoute
   '/credit-check': typeof CreditCheckRoute
+  '/liff-callback': typeof LiffCallbackRoute
   '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/refinance-check': typeof RefinanceCheckRoute
-  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/blog/$id': typeof BlogIdRoute
   '/contract/$id': typeof ContractIdRoute
@@ -287,6 +316,7 @@ export interface FileRoutesByTo {
   '/notification/$id': typeof NotificationIdRoute
   '/promotion/$id': typeof PromotionIdRoute
   '/receipt/$contractId': typeof ReceiptContractIdRoute
+  '/settings/privacy-policy': typeof SettingsPrivacyPolicyRoute
   '/ticket/$id': typeof TicketIdRoute
   '/ticket/history': typeof TicketHistoryRoute
   '/blog': typeof BlogIndexRoute
@@ -295,6 +325,7 @@ export interface FileRoutesByTo {
   '/installment': typeof InstallmentIndexRoute
   '/notification': typeof NotificationIndexRoute
   '/promotion': typeof PromotionIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/ticket': typeof TicketIndexRoute
   '/installment/contract/$id': typeof InstallmentContractIdRoute
   '/installment/pay/$id': typeof InstallmentPayIdRoute
@@ -305,15 +336,17 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/500': typeof R500Route
   '/app-error': typeof AppErrorRoute
   '/contact': typeof ContactRoute
   '/contact-support': typeof ContactSupportRoute
   '/credit-check': typeof CreditCheckRoute
+  '/liff-callback': typeof LiffCallbackRoute
   '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/promotion': typeof PromotionRouteWithChildren
   '/refinance-check': typeof RefinanceCheckRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/blog/$id': typeof BlogIdRoute
   '/contract/$id': typeof ContractIdRoute
@@ -326,6 +359,7 @@ export interface FileRoutesById {
   '/notification/$id': typeof NotificationIdRoute
   '/promotion/$id': typeof PromotionIdRoute
   '/receipt/$contractId': typeof ReceiptContractIdRoute
+  '/settings/privacy-policy': typeof SettingsPrivacyPolicyRoute
   '/ticket/$id': typeof TicketIdRoute
   '/ticket/history': typeof TicketHistoryRoute
   '/blog/': typeof BlogIndexRoute
@@ -334,6 +368,7 @@ export interface FileRoutesById {
   '/installment/': typeof InstallmentIndexRoute
   '/notification/': typeof NotificationIndexRoute
   '/promotion/': typeof PromotionIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/ticket/': typeof TicketIndexRoute
   '/installment/contract/$id': typeof InstallmentContractIdRoute
   '/installment/pay/$id': typeof InstallmentPayIdRoute
@@ -345,10 +380,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/500'
     | '/app-error'
     | '/contact'
     | '/contact-support'
     | '/credit-check'
+    | '/liff-callback'
     | '/otp'
     | '/profile'
     | '/promotion'
@@ -366,6 +403,7 @@ export interface FileRouteTypes {
     | '/notification/$id'
     | '/promotion/$id'
     | '/receipt/$contractId'
+    | '/settings/privacy-policy'
     | '/ticket/$id'
     | '/ticket/history'
     | '/blog'
@@ -374,6 +412,7 @@ export interface FileRouteTypes {
     | '/installment'
     | '/notification'
     | '/promotion/'
+    | '/settings/'
     | '/ticket'
     | '/installment/contract/$id'
     | '/installment/pay/$id'
@@ -383,14 +422,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/500'
     | '/app-error'
     | '/contact'
     | '/contact-support'
     | '/credit-check'
+    | '/liff-callback'
     | '/otp'
     | '/profile'
     | '/refinance-check'
-    | '/settings'
     | '/sign-in'
     | '/blog/$id'
     | '/contract/$id'
@@ -403,6 +443,7 @@ export interface FileRouteTypes {
     | '/notification/$id'
     | '/promotion/$id'
     | '/receipt/$contractId'
+    | '/settings/privacy-policy'
     | '/ticket/$id'
     | '/ticket/history'
     | '/blog'
@@ -411,6 +452,7 @@ export interface FileRouteTypes {
     | '/installment'
     | '/notification'
     | '/promotion'
+    | '/settings'
     | '/ticket'
     | '/installment/contract/$id'
     | '/installment/pay/$id'
@@ -420,10 +462,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/500'
     | '/app-error'
     | '/contact'
     | '/contact-support'
     | '/credit-check'
+    | '/liff-callback'
     | '/otp'
     | '/profile'
     | '/promotion'
@@ -441,6 +485,7 @@ export interface FileRouteTypes {
     | '/notification/$id'
     | '/promotion/$id'
     | '/receipt/$contractId'
+    | '/settings/privacy-policy'
     | '/ticket/$id'
     | '/ticket/history'
     | '/blog/'
@@ -449,6 +494,7 @@ export interface FileRouteTypes {
     | '/installment/'
     | '/notification/'
     | '/promotion/'
+    | '/settings/'
     | '/ticket/'
     | '/installment/contract/$id'
     | '/installment/pay/$id'
@@ -459,15 +505,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R500Route: typeof R500Route
   AppErrorRoute: typeof AppErrorRoute
   ContactRoute: typeof ContactRoute
   ContactSupportRoute: typeof ContactSupportRoute
   CreditCheckRoute: typeof CreditCheckRoute
+  LiffCallbackRoute: typeof LiffCallbackRoute
   OtpRoute: typeof OtpRoute
   ProfileRoute: typeof ProfileRoute
   PromotionRoute: typeof PromotionRouteWithChildren
   RefinanceCheckRoute: typeof RefinanceCheckRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   SignInRoute: typeof SignInRoute
   BlogIdRoute: typeof BlogIdRoute
   ContractIdRoute: typeof ContractIdRoute
@@ -538,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/liff-callback': {
+      id: '/liff-callback'
+      path: '/liff-callback'
+      fullPath: '/liff-callback'
+      preLoaderRoute: typeof LiffCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/credit-check': {
       id: '/credit-check'
       path: '/credit-check'
@@ -566,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/500': {
+      id: '/500'
+      path: '/500'
+      fullPath: '/500'
+      preLoaderRoute: typeof R500RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -579,6 +641,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ticket'
       preLoaderRoute: typeof TicketIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/promotion/': {
       id: '/promotion/'
@@ -635,6 +704,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ticket/$id'
       preLoaderRoute: typeof TicketIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/privacy-policy': {
+      id: '/settings/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/settings/privacy-policy'
+      preLoaderRoute: typeof SettingsPrivacyPolicyRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/receipt/$contractId': {
       id: '/receipt/$contractId'
@@ -765,17 +841,33 @@ const PromotionRouteWithChildren = PromotionRoute._addFileChildren(
   PromotionRouteChildren,
 )
 
+interface SettingsRouteChildren {
+  SettingsPrivacyPolicyRoute: typeof SettingsPrivacyPolicyRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsPrivacyPolicyRoute: SettingsPrivacyPolicyRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R500Route: R500Route,
   AppErrorRoute: AppErrorRoute,
   ContactRoute: ContactRoute,
   ContactSupportRoute: ContactSupportRoute,
   CreditCheckRoute: CreditCheckRoute,
+  LiffCallbackRoute: LiffCallbackRoute,
   OtpRoute: OtpRoute,
   ProfileRoute: ProfileRoute,
   PromotionRoute: PromotionRouteWithChildren,
   RefinanceCheckRoute: RefinanceCheckRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   SignInRoute: SignInRoute,
   BlogIdRoute: BlogIdRoute,
   ContractIdRoute: ContractIdRoute,

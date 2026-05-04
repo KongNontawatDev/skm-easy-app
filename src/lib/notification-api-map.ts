@@ -44,7 +44,9 @@ export function mapCustomerNotificationRow(row: Record<string, unknown>): Notifi
     relatedType: asRelatedType(row.relatedType),
     createdAt,
     updatedAt: String(row.updatedAt ?? row.updated_at ?? createdAt),
-    actionUrl: row.actionUrl != null ? String(row.actionUrl) : undefined,
-    actionText: row.actionText != null ? String(row.actionText) : undefined,
+    actionUrl1: row.actionUrl1 != null ? String(row.actionUrl1) : undefined,
+    actionText1: row.actionText1 != null ? String(row.actionText1) : undefined,
+    actionUrl2: row.actionUrl2 != null ? String(row.actionUrl2) : undefined,
+    actionText2: row.actionText2 != null ? String(row.actionText2) : undefined,
   }
 }

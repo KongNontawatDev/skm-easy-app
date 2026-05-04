@@ -10,7 +10,6 @@ import {
   Clock,
   Download,
 } from 'lucide-react'
-import { getContractById, getPaymentsByContract } from '@/lib/mock-data'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import {
   mapLegacyContractDetailToContractData,
@@ -33,11 +32,11 @@ import {
 } from '@/components/mobile'
 import { toast } from 'sonner'
 import {
-  bahtToSatangString,
   nationalId13FromProfileRow,
   readBillPaymentEnv,
   tryBuildThaiBillPaymentPayload,
 } from '@/lib/thai-bill-payment-qr'
+import { getCustomerJwtSub } from '@/lib/customer-session'
 
 type PaymentStep = 'qrcode' | 'success'
 
@@ -77,8 +76,8 @@ export function PaymentDetail() {
     },
   })
 
-  const payments = hasToken ? (apiPayments ?? []) : getPaymentsByContract(contractRef)
-  const contract = hasToken ? apiContract ?? undefined : getContractById(contractRef)
+  const payments = apiPayments ?? []
+  const contract = apiContract ?? undefined
 
   const currentPayment = payments.find((p) => p.status === 'pending' || p.status === 'overdue')
   const overduePayments = getOverduePayments(payments)
@@ -91,12 +90,18 @@ export function PaymentDetail() {
   const minimumAmount = getMinimumPaymentAmount(payments)
 
   const nationalId13 = useMemo(() => {
-    if (hasToken) return nationalId13FromProfileRow(profile)
+    if (hasToken) {
+      const fromProfile = nationalId13FromProfileRow(profile)
+      if (fromProfile) return fromProfile
+      const fromJwtSub = String(getCustomerJwtSub() ?? '').split(':').pop()?.replace(/\D/g, '') ?? ''
+      if (fromJwtSub.length === 13) return fromJwtSub
+      return null
+    }
     const t = contract?.customerInfo.taxId?.replace(/\D/g, '') ?? ''
     return t.length === 13 ? t : null
   }, [hasToken, profile, contract])
 
-  const { billPaymentPayload, billPaymentError, billPaymentUseZeroAmount } = useMemo(() => {
+  const { billPaymentPayload, billPaymentError } = useMemo(() => {
     if (!contract) {
       return {
         billPaymentPayload: null as string | null,
@@ -106,9 +111,9 @@ export function PaymentDetail() {
     }
     const env = readBillPaymentEnv()
     if (hasToken && profileLoading) {
-      return { billPaymentPayload: null, billPaymentError: null, billPaymentUseZeroAmount: env.useZeroAmount }
+      return { billPaymentPayload: null, billPaymentError: null, billPaymentUseZeroAmount: true }
     }
-    const amountSatang = env.useZeroAmount ? '0' : bahtToSatangString(totalOverdueAmount)
+    const amountSatang = '0' // Force zero amount
     if (!nationalId13) {
       return {
         billPaymentPayload: null,
@@ -130,7 +135,7 @@ export function PaymentDetail() {
           billPaymentError: built.message,
           billPaymentUseZeroAmount: env.useZeroAmount,
         }
-  }, [contract, nationalId13, totalOverdueAmount, hasToken, profileLoading])
+  }, [contract, nationalId13, hasToken, profileLoading])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -142,6 +147,20 @@ export function PaymentDetail() {
   }
 
   const formatNumber = (num: number) => num.toLocaleString('th-TH')
+
+  if (isLoading) {
+    return (
+      <MobileLayout>
+        <MobileHeader title='กำลังโหลดข้อมูล...' />
+        <MobileContent>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </MobileContent>
+        <BottomNavigation currentPath='/installment' />
+      </MobileLayout>
+    )
+  }
 
   if (!contract || !currentPayment) {
     return (
@@ -189,11 +208,7 @@ export function PaymentDetail() {
             onConfirmPaid={() => setCurrentStep('success')}
             billPaymentPayload={billPaymentPayload}
             billPaymentError={billPaymentError}
-            contractNumberLabel={contract.contractNumber}
-            nationalIdMasked={
-              nationalId13 ? `${nationalId13.slice(0, 3)}•••••${nationalId13.slice(-4)}` : '—'
-            }
-            useZeroAmount={billPaymentUseZeroAmount}
+            nextPaymentDueDate={currentPayment.dueDate}
           />
         )}
 
@@ -220,9 +235,7 @@ function QRCodeStep({
   onConfirmPaid,
   billPaymentPayload,
   billPaymentError,
-  contractNumberLabel,
-  nationalIdMasked,
-  useZeroAmount,
+  nextPaymentDueDate,
 }: {
   overduePayments: ReturnType<typeof getOverduePayments>
   totalOverdueAmount: number
@@ -236,9 +249,7 @@ function QRCodeStep({
   onConfirmPaid: () => void
   billPaymentPayload: string | null
   billPaymentError: string | null
-  contractNumberLabel: string
-  nationalIdMasked: string
-  useZeroAmount: boolean
+  nextPaymentDueDate: string
 }) {
   const [isSaving, setIsSaving] = useState(false)
 
@@ -303,6 +314,8 @@ function QRCodeStep({
     }
   }, [qrDataUrl])
 
+  const hasNothingToPay = totalOverdueAmount <= 0 && overduePayments.length === 0
+
   return (
     <div className='space-y-4'>
       <MobileCard className='p-4'>
@@ -313,148 +326,161 @@ function QRCodeStep({
           <p className='text-sm text-gray-500 dark:text-gray-400'>
             ยอดรวมงวดที่ค้างชำระ {overduePayments.length} งวด
           </p>
-          <div className='mt-3 rounded-lg bg-green-50 p-2 dark:bg-green-900/20'>
+          {overduePayments.length > 0 ? (
+            <div className='mt-3 rounded-lg bg-green-50 p-2 dark:bg-green-900/20'>
             <p className='text-sm font-medium text-green-800 dark:text-green-200'>
-              ขั้นต่ำ: {formatNumber(minimumAmount)} ฿ (งวดที่ {overduePayments[0]?.installmentNo} + ค่าธรรมเนียม)
+              ขั้นต่ำ: {formatNumber(minimumAmount)} ฿ (งวดที่ {overduePayments[0]?.installmentNo})
             </p>
-          </div>
+            </div>
+          ) : (
+            <div className='mt-3 rounded-lg bg-green-50 p-2 dark:bg-green-900/20'>
+              <p className='text-sm font-medium text-green-800 dark:text-green-200'>
+                ยังไม่มีงวดค้างชำระ
+              </p>
+            </div>
+          )}
         </div>
       </MobileCard>
 
-      {isOverdue && (
-        <div className='flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-700 dark:bg-red-900/20'>
-          <AlertCircle className='h-4 w-4 shrink-0 text-red-500 dark:text-red-400' />
-          <p className='text-xs text-red-600 dark:text-red-400'>เกินกำหนดชำระ — กรุณาชำระโดยเร็วเพื่อหลีกเลี่ยงค่าปรับเพิ่มเติม</p>
-        </div>
-      )}
-
-      {overduePayments.length > 0 && (
-        <MobileCard className='p-4'>
-          <div className='rounded-lg border border-gray-200 dark:border-gray-700'>
-            <button className='flex w-full items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800' onClick={togglePaymentBreakdown}>
-              <div className='flex-1'>
-                <div className='flex items-center justify-between'>
-                  <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>รายละเอียดงวดที่ค้างชำระ</h3>
-                  <span className='text-xl font-bold text-[#EC1B2E]'>{formatNumber(totalOverdueAmount)} ฿</span>
-                </div>
-                <p className='mt-1 text-sm text-gray-500'>รวม {overduePayments.length} งวด</p>
-              </div>
-              {isPaymentBreakdownExpanded ? <ChevronUp className='h-5 w-5 text-gray-400' /> : <ChevronDown className='h-5 w-5 text-gray-400' />}
-            </button>
-            {isPaymentBreakdownExpanded && (
-              <div className='border-t border-gray-200 px-4 pb-4 dark:border-gray-700'>
-                <div className='space-y-4 pt-4'>
-                  {overduePayments.map((payment) => {
-                    const breakdown = calculatePaymentBreakdown(payment)
-                    return (
-                      <div key={payment.id} className='rounded-lg bg-gray-50 p-3 dark:bg-gray-800'>
-                        <div className='mb-2 flex items-center justify-between'>
-                          <h4 className='font-medium text-gray-900 dark:text-gray-100'>งวดที่ {payment.installmentNo}</h4>
-                          <span className='text-lg font-bold text-[#EC1B2E]'>{formatNumber(breakdown.totalAmount)} ฿</span>
-                        </div>
-                        <p className='mb-3 text-sm text-gray-500'>
-                          ครบกำหนด: {formatDate(payment.dueDate)}
-                          {breakdown.daysOverdue > 0 && <span className='ml-2 text-red-500'>(เกินกำหนด {breakdown.daysOverdue} วัน)</span>}
-                        </p>
-                        <div className='space-y-2'>
-                          {[
-                            ['ค่างวด:', formatNumber(breakdown.baseAmount), false],
-                            ['ค่าปรับล่าช้า:', formatNumber(breakdown.lateFee), breakdown.lateFee > 0],
-                            ['ค่าติดตามหนี้:', formatNumber(breakdown.collectionFee), breakdown.collectionFee > 0],
-                            ['ค่าธรรมเนียมอื่นๆ:', formatNumber(breakdown.otherFees), false],
-                          ].map(([label, value, isRed]) => (
-                            <div key={label as string} className='flex justify-between text-sm'>
-                              <span className='text-gray-600 dark:text-gray-400'>{label as string}</span>
-                              <span className={isRed ? 'text-red-600' : ''}>{value as string} ฿</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+      {/* ถ้าไม่มียอดค้างชำระ ไม่แสดง QR code และปุ่มชำระ */}
+      {hasNothingToPay ? (
+        <MobileCard className='border-green-200 bg-green-50 p-6 dark:border-green-700 dark:bg-green-900/20'>
+          <div className='flex flex-col items-center text-center'>
+            <div className='mb-4 rounded-full bg-green-100 p-4 dark:bg-green-900/30'>
+              <CheckCircle className='h-12 w-12 text-green-600 dark:text-green-400' />
+            </div>
+            <h2 className='text-lg font-bold text-green-800 dark:text-green-200'>
+              ไม่มียอดค้างชำระ
+            </h2>
+            <p className='mt-2 text-sm leading-relaxed text-green-700 dark:text-green-300'>
+              โปรดกลับมาวันที่ {formatDate(nextPaymentDueDate)} เพื่อดำเนินการชำระเงิน
+            </p>
           </div>
         </MobileCard>
-      )}
-
-      <MobileCard className='p-4'>
-        <div className='mb-3 rounded-lg border border-blue-100 bg-blue-50/90 px-3 py-2 text-left text-xs text-blue-900 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-100'>
-          <p className='font-semibold'>Bill Payment — ธนาคารกรุงศรี (suffix 01)</p>
-          <p className='mt-1 text-blue-800/90 dark:text-blue-200/90'>
-            Ref1 (เลขบัตร ปชช.): <span className='font-mono'>{nationalIdMasked}</span>
-          </p>
-          <p className='text-blue-800/90 dark:text-blue-200/90'>
-            Ref2 (เลขที่สัญญา): <span className='font-mono'>{contractNumberLabel}</span>
-          </p>
-          <p className='mt-1 text-blue-800/90 dark:text-blue-200/90'>
-            {useZeroAmount
-              ? 'ยอดใน QR เป็น 0 — เปิดแอปธนาคารแล้วกรอกยอดตามที่ต้องชำระ (รองรับชำระบางส่วน)'
-              : `ยอดใน QR: ${formatNumber(totalOverdueAmount)} บาท (สตางค์ในสตริงตามยอดรวมค้าง)`}
-          </p>
-        </div>
-
-        {billPaymentError ? (
-          <div className='mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100'>
-            {billPaymentError}
-          </div>
-        ) : null}
-
-        <div className='text-center'>
-          {isLoading || qrGenerating ? (
-            <div className='mx-auto flex h-64 w-64 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700'>
-              <RefreshCw className='h-8 w-8 animate-spin text-gray-400' />
-            </div>
-          ) : qrDataUrl ? (
-            <div className='mx-auto flex h-64 w-64 items-center justify-center rounded-2xl border-2 border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800'>
-              <img src={qrDataUrl} alt='QR Bill Payment กรุงศรี' className='h-60 w-60 rounded-lg' />
-            </div>
-          ) : (
-            <div className='mx-auto flex min-h-48 max-w-sm flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-400'>
-              <p>ไม่สามารถสร้าง QR ได้ — ตรวจสอบข้อความด้านบน หรือลองใหม่ภายหลัง</p>
+      ) : (
+        <>
+          {isOverdue && (
+            <div className='flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-700 dark:bg-red-900/20'>
+              <AlertCircle className='h-4 w-4 shrink-0 text-red-500 dark:text-red-400' />
+              <p className='text-xs text-red-600 dark:text-red-400'>เกินกำหนดชำระ — กรุณาชำระโดยเร็วเพื่อหลีกเลี่ยงค่าปรับเพิ่มเติม</p>
             </div>
           )}
 
-          {/* Save QR Code button */}
-          <button
-            onClick={handleSaveQRCode}
-            disabled={isLoading || isSaving || !qrDataUrl}
-            className='mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
-          >
-            {isSaving ? (
-              <RefreshCw className='h-4 w-4 animate-spin' />
-            ) : (
-              <Download className='h-4 w-4' />
-            )}
-            {isSaving ? 'กำลังบันทึก...' : 'บันทึกรูป QR Code'}
-          </button>
-        </div>
-      </MobileCard>
+          {overduePayments.length > 0 && (
+            <MobileCard className='p-4'>
+              <div className='rounded-lg border border-gray-200 dark:border-gray-700'>
+                <button className='flex w-full items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800' onClick={togglePaymentBreakdown}>
+                  <div className='flex-1'>
+                    <div className='flex items-center justify-between'>
+                      <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>รายละเอียดงวดที่ค้างชำระ</h3>
+                      <span className='text-xl font-bold text-[#EC1B2E]'>{formatNumber(totalOverdueAmount)} ฿</span>
+                    </div>
+                    <p className='mt-1 text-sm text-gray-500'>รวม {overduePayments.length} งวด</p>
+                  </div>
+                  {isPaymentBreakdownExpanded ? <ChevronUp className='h-5 w-5 text-gray-400' /> : <ChevronDown className='h-5 w-5 text-gray-400' />}
+                </button>
+                {isPaymentBreakdownExpanded && (
+                  <div className='border-t border-gray-200 px-4 pb-4 dark:border-gray-700'>
+                    <div className='space-y-4 pt-4'>
+                      {overduePayments.map((payment) => {
+                        const breakdown = calculatePaymentBreakdown(payment)
+                        return (
+                          <div key={payment.id} className='rounded-lg bg-gray-50 p-3 dark:bg-gray-800'>
+                            <div className='mb-2 flex items-center justify-between'>
+                              <h4 className='font-medium text-gray-900 dark:text-gray-100'>งวดที่ {payment.installmentNo}</h4>
+                              <span className='text-lg font-bold text-[#EC1B2E]'>{formatNumber(breakdown.totalAmount)} ฿</span>
+                            </div>
+                            <p className='mb-3 text-sm text-gray-500'>
+                              ครบกำหนด: {formatDate(payment.dueDate)}
+                              {breakdown.daysOverdue > 0 && <span className='ml-2 text-red-500'>(เกินกำหนด {breakdown.daysOverdue} วัน)</span>}
+                            </p>
+                            <div className='space-y-2'>
+                              {[
+                                ['ค่างวด:', formatNumber(breakdown.baseAmount), false],
+                                ['ค่าปรับล่าช้า:', formatNumber(breakdown.lateFee), breakdown.lateFee > 0],
+                                ['ค่าติดตามหนี้:', formatNumber(breakdown.collectionFee), breakdown.collectionFee > 0],
+                                ['ค่าธรรมเนียมอื่นๆ:', formatNumber(breakdown.otherFees), false],
+                              ].map(([label, value, isRed]) => (
+                                <div key={label as string} className='flex justify-between text-sm'>
+                                  <span className='text-gray-600 dark:text-gray-400'>{label as string}</span>
+                                  <span className={isRed ? 'text-red-600' : ''}>{value as string} ฿</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </MobileCard>
+          )}
 
-      <MobileCard className='p-4'>
-        <h3 className='mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100'>ขั้นตอนการชำระเงิน</h3>
-        <div className='space-y-3 text-sm text-gray-600 dark:text-gray-400'>
-          {[
-            'กดปุ่ม "บันทึกรูป QR Code" หรือแคปหน้าจอเก็บไว้ในอุปกรณ์ของคุณ',
-            'เปิดแอปธนาคารกรุงศรี (หรือแอปที่รองรับ Bill Payment) เลือกสแกน QR / อัปโหลดรูป QR',
-            'ตรวจสอบผู้รับเงินและ Ref1 / Ref2 ให้ตรงกับเลขบัตรและเลขที่สัญญาของคุณ จากนั้นกรอกยอดเงิน (ถ้า QR ใช้ยอด 0)',
-            'ยืนยันการโอน แล้วกลับมาที่แอปนี้กดปุ่ม "ชำระแล้ว" ด้านล่าง',
-          ].map((text, i) => (
-            <div key={i} className='flex items-start'>
-              <div className='mr-3 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EC1B2E] text-xs font-bold text-white'>{i + 1}</div>
-              <p>{text}</p>
+          <MobileCard className='p-4'>
+
+            {billPaymentError ? (
+              <div className='mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100'>
+                {billPaymentError}
+              </div>
+            ) : null}
+
+            <div className='text-center'>
+              {isLoading || qrGenerating ? (
+                <div className='mx-auto flex h-64 w-64 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700'>
+                  <RefreshCw className='h-8 w-8 animate-spin text-gray-400' />
+                </div>
+              ) : qrDataUrl ? (
+                <div className='mx-auto flex h-64 w-64 items-center justify-center rounded-2xl border-2 border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800'>
+                  <img src={qrDataUrl} alt='QR Bill Payment กรุงศรี' className='h-60 w-60 rounded-lg' />
+                </div>
+              ) : (
+                <div className='mx-auto flex min-h-48 max-w-sm flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-400'>
+                  <p>ไม่สามารถสร้าง QR ได้ — ตรวจสอบข้อความด้านบน หรือลองใหม่ภายหลัง</p>
+                </div>
+              )}
+
+              {/* Save QR Code button */}
+              <button
+                onClick={handleSaveQRCode}
+                disabled={isLoading || isSaving || !qrDataUrl}
+                className='mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+              >
+                {isSaving ? (
+                  <RefreshCw className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Download className='h-4 w-4' />
+                )}
+                {isSaving ? 'กำลังบันทึก...' : 'บันทึกรูป QR Code'}
+              </button>
             </div>
-          ))}
-        </div>
-      </MobileCard>
+          </MobileCard>
 
-      <div className='space-y-3'>
-        <MobileButton className='w-full' onClick={onConfirmPaid} size='lg'>
-          <CheckCircle className='mr-2 h-5 w-5' />
-          ชำระแล้ว
-        </MobileButton>
-      </div>
+          <MobileCard className='p-4'>
+            <h3 className='mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100'>ขั้นตอนการชำระเงิน</h3>
+            <div className='space-y-3 text-sm text-gray-600 dark:text-gray-400'>
+              {[
+                'กดปุ่ม "บันทึกรูป QR Code" หรือแคปหน้าจอเก็บไว้ในอุปกรณ์ของคุณ',
+                'เปิดแอปธนาคารกรุงศรี (หรือแอปที่รองรับ Bill Payment) เลือกสแกน QR / อัปโหลดรูป QR',
+                'ตรวจสอบผู้รับเงินและ Ref1 / Ref2 ให้ตรงกับเลขบัตรและเลขที่สัญญาของคุณ จากนั้นกรอกยอดเงิน (ถ้า QR ใช้ยอด 0)',
+                'ยืนยันการโอน แล้วกลับมาที่แอปนี้กดปุ่ม "ชำระแล้ว" ด้านล่าง',
+              ].map((text, i) => (
+                <div key={i} className='flex items-start'>
+                  <div className='mr-3 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EC1B2E] text-xs font-bold text-white'>{i + 1}</div>
+                  <p>{text}</p>
+                </div>
+              ))}
+            </div>
+          </MobileCard>
+
+          <div className='space-y-3'>
+            <MobileButton className='w-full' onClick={onConfirmPaid} size='lg'>
+              <CheckCircle className='mr-2 h-5 w-5' />
+              ชำระแล้ว
+            </MobileButton>
+          </div>
+        </>
+      )}
     </div>
   )
 }

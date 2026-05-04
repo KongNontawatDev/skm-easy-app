@@ -20,6 +20,11 @@ function decodeJwtExp(token: string): number | null {
   return typeof payload?.exp === 'number' ? payload.exp : null
 }
 
+export function getCustomerAccessToken(): string | null {
+  if (typeof localStorage === 'undefined') return null
+  return localStorage.getItem(ACCESS)
+}
+
 /** `sub` ใน JWT ลูกค้า (รหัสลูกค้า legacy เช่น COMPID:IDNO) — ใช้แยกผู้ใช้ใน localStorage */
 export function getCustomerJwtSub(): string | null {
   if (typeof localStorage === 'undefined') return null
@@ -46,8 +51,7 @@ export function isCustomerAccessTokenValid(skewSec = 90): boolean {
 
 /** ใช้ตั้ง interval refresh ล่วงหน้า */
 export function getCustomerAccessTokenExpiresAtMs(): number | null {
-  if (typeof localStorage === 'undefined') return null
-  const t = localStorage.getItem(ACCESS)
+  const t = getCustomerAccessToken()
   if (!t) return null
   const exp = decodeJwtExp(t)
   return exp ? exp * 1000 : null
@@ -56,6 +60,10 @@ export function getCustomerAccessTokenExpiresAtMs(): number | null {
 export function getCustomerRefreshToken(): string | null {
   if (typeof localStorage === 'undefined') return null
   return localStorage.getItem(REFRESH)
+}
+
+export function hasCustomerSession(): boolean {
+  return isCustomerAccessTokenValid(0) || !!getCustomerRefreshToken()
 }
 
 export function setCustomerTokens(access: string, refresh: string): void {

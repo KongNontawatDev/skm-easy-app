@@ -8,8 +8,8 @@ import {
 import { LoadingSpinner, EmptyState } from '@/components/shared'
 import { RefinanceVehicleCard } from './components/refinance-vehicle-card'
 import { useRefinanceVehicles, useRefinanceCheck } from './hooks'
-import { mockRefinanceVehicles } from './data/mock-data'
 import { Search, RefreshCw } from 'lucide-react'
+import type { RefinanceVehicle } from './types'
 
 export function RefinanceCheckPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -18,8 +18,9 @@ export function RefinanceCheckPage() {
   const { isLoading, error, refetch } = useRefinanceVehicles()
   const refinanceCheckMutation = useRefinanceCheck()
 
-  // Use mock data for now
-  const displayVehicles = mockRefinanceVehicles.filter(vehicle => {
+  // TODO: โหลดข้อมูลจาก API จริง
+  const allVehicles: RefinanceVehicle[] = []
+  const displayVehicles = allVehicles.filter(vehicle => {
     const matchesSearch = vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          vehicle.plateNumber.toLowerCase().includes(searchTerm.toLowerCase())

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   MobileLayout,
@@ -7,15 +8,26 @@ import {
 } from '@/components/mobile'
 import { useParams } from '@tanstack/react-router'
 import { fetchPublicGuideById } from '@/lib/cms-public-api'
+import { useMarkGuideViewed } from '@/features/home/hooks/useMutation'
 
 export function GuideDetail() {
   const { id } = useParams({ from: '/guide/$id' })
+  const markGuideViewed = useMarkGuideViewed()
 
   const { data: guide, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['public-guide', id],
     queryFn: () => fetchPublicGuideById(id),
     enabled: !!id,
   })
+
+  // Track view when guide is loaded
+  useEffect(() => {
+    if (guide && id) {
+      markGuideViewed.mutate(id)
+    }
+    // We only want to track view once per guide load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, !!guide])
 
   if (isLoading) {
     return (
@@ -61,7 +73,7 @@ export function GuideDetail() {
             <h1 className="mb-2 text-xl font-bold text-gray-900 dark:text-gray-100">{guide.title}</h1>
             <p className="mb-4 text-sm text-gray-500">ลำดับการแสดง: {guide.sortOrder}</p>
             <div
-              className="prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
+              className="cms-rich-content prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
               dangerouslySetInnerHTML={{ __html: guide.content }}
             />
           </div>

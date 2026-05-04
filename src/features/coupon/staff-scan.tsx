@@ -8,7 +8,6 @@ import {
   MobileInput
 } from '@/components/mobile'
 import { QrCode, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { mockCoupons } from './data/mock-data'
 import { type Coupon } from './types'
 
 export function StaffScan() {
@@ -42,11 +41,11 @@ export function StaffScan() {
   }
 
   // ตรวจสอบและประมวลผลโค้ดคูปอง
-  const processCouponCode = (code: string) => {
+  const processCouponCode = (_code: string) => {
     setIsProcessing(true)
     
-    // หาคูปองจากโค้ด
-    const coupon = mockCoupons.find(c => c.qrCode === code)
+    // TODO: เรียก API จริงเพื่อหาคูปอง
+    const coupon = null as Coupon | null
     
     setTimeout(() => {
       if (coupon) {

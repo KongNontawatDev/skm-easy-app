@@ -10,17 +10,25 @@ import axios from 'axios'
 import {
   clearCustomerSession,
   CUSTOMER_SESSION_CHANGED,
-  getCustomerAccessTokenExpiresAtMs,
   getCustomerRefreshToken,
   isCustomerAccessTokenValid,
   setCustomerAccessToken,
   setCustomerTokens,
 } from '@/lib/customer-session'
 import { ensureLiffLoggedIn, getLiffBootstrapResult } from '@/lib/liff-client'
+import {
+  captureLiffStateDeepLinkFromLocation,
+  clearPendingLiffStateDeepLink,
+  getPendingLiffStateDeepLink,
+  LIFF_STATE_DEEPLINK_READY,
+} from '@/lib/liff-state-deeplink'
 import { setSkmAppErrorPayload } from '@/lib/skm-app-error'
 import { getSkmApiErrorMessage } from '@/lib/skm-api'
 
-const UNAUTH_PATH_PREFIXES = ['/sign-in', '/otp', '/contact-support', '/app-error']
+const UNAUTH_PATH_PREFIXES = ['/sign-in', '/otp', '/contact-support', '/app-error', '/liff-callback']
+const JWT_ROLLING_RENEW_THRESHOLD_SEC = 30 * 24 * 60 * 60
+const JWT_ROLLING_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
+const CLIENT_APP_HEADERS = { 'X-Client-App': 'skm-easy-app' } as const
 
 function isUnauthPath(pathname: string): boolean {
   return UNAUTH_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
@@ -28,26 +36,59 @@ function isUnauthPath(pathname: string): boolean {
 
 let authEnsureChain: Promise<void> = Promise.resolve()
 
+async function navigateToPendingLiffTargetIfNeeded(
+  router: ReturnType<typeof useRouter>,
+  fallbackPath?: string,
+): Promise<boolean> {
+  const target = getPendingLiffStateDeepLink()
+  if (!target) return false
+
+  const current = typeof window !== 'undefined'
+    ? `${window.location.pathname}${window.location.search}${window.location.hash}`
+    : fallbackPath
+  if (current !== target) {
+    await router.navigate({ to: target, replace: true } as never)
+  }
+  clearPendingLiffStateDeepLink()
+  return true
+}
+
 async function runCustomerAuthEnsure(
   router: ReturnType<typeof useRouter>,
   pathname: string,
   queryClient: QueryClient | undefined,
 ) {
   try {
-    if (isCustomerAccessTokenValid()) return
+    captureLiffStateDeepLinkFromLocation()
+
+    if (isCustomerAccessTokenValid(JWT_ROLLING_RENEW_THRESHOLD_SEC)) {
+      await navigateToPendingLiffTargetIfNeeded(router, pathname)
+      return
+    }
 
     const refresh = getCustomerRefreshToken()
-    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
+    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
     const root = base.replace(/\/$/, '')
 
     if (refresh) {
       try {
-        const res = await axios.post<{ success: boolean; data: { accessToken: string } }>(
+        const res = await axios.post<{ success: boolean; data: { accessToken: string; refreshToken?: string } }>(
           `${root}/auth/customer/refresh`,
           { refreshToken: refresh },
+          { headers: CLIENT_APP_HEADERS },
         )
         if (res.data?.success && res.data.data?.accessToken) {
-          setCustomerAccessToken(res.data.data.accessToken)
+          if (res.data.data.refreshToken) {
+            setCustomerTokens(res.data.data.accessToken, res.data.data.refreshToken)
+          } else {
+            setCustomerAccessToken(res.data.data.accessToken)
+          }
+          if (pathname === '/sign-in') {
+            const usedPendingTarget = await navigateToPendingLiffTargetIfNeeded(router, pathname)
+            if (!usedPendingTarget) await router.navigate({ to: '/', replace: true })
+          } else {
+            await navigateToPendingLiffTargetIfNeeded(router, pathname)
+          }
           return
         }
       } catch {
@@ -89,6 +130,7 @@ async function runCustomerAuthEnsure(
     const res = await axios.post<{ success: boolean; data: unknown }>(
       `${root}/auth/customer/liff/bootstrap`,
       body,
+      { headers: CLIENT_APP_HEADERS },
     )
     const data = res.data?.data as
       | { status: 'session'; accessToken: string; refreshToken: string }
@@ -101,6 +143,8 @@ async function runCustomerAuthEnsure(
       setCustomerTokens(data.accessToken, data.refreshToken)
       void queryClient?.invalidateQueries({ queryKey: ['me-profile'] })
       void queryClient?.invalidateQueries({ queryKey: ['me-contracts'] })
+      const usedPendingTarget = await navigateToPendingLiffTargetIfNeeded(router, pathname)
+      if (usedPendingTarget) return
       if (pathname === '/sign-in') {
         await router.navigate({ to: '/', replace: true })
       }
@@ -147,33 +191,34 @@ function CustomerAccessRefreshTicker() {
     if (typeof window === 'undefined') return
     if (!getCustomerRefreshToken()) return
     if (isUnauthPath(pathname)) return
-
-    const expMs = getCustomerAccessTokenExpiresAtMs()
-    if (!expMs) return
-
-    const leadMs = 3 * 60 * 1000
-    const delay = Math.max(8_000, expMs - Date.now() - leadMs)
-    const id = window.setTimeout(() => {
+    const runRollingRefresh = () => {
       void (async () => {
-        if (isCustomerAccessTokenValid()) return
+        if (isCustomerAccessTokenValid(JWT_ROLLING_RENEW_THRESHOLD_SEC)) return
         const rt = getCustomerRefreshToken()
         if (!rt) return
-        const base = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
+        const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
         const root = base.replace(/\/$/, '')
         try {
-          const res = await axios.post<{ success: boolean; data: { accessToken: string } }>(
+          const res = await axios.post<{ success: boolean; data: { accessToken: string; refreshToken?: string } }>(
             `${root}/auth/customer/refresh`,
             { refreshToken: rt },
+            { headers: CLIENT_APP_HEADERS },
           )
           if (res.data?.success && res.data.data?.accessToken) {
-            setCustomerAccessToken(res.data.data.accessToken)
+            if (res.data.data.refreshToken) {
+              setCustomerTokens(res.data.data.accessToken, res.data.data.refreshToken)
+            } else {
+              setCustomerAccessToken(res.data.data.accessToken)
+            }
           }
         } catch {
           /* ให้ interceptor จัดการเมื่อมีการเรียก API จริง */
         }
       })()
-    }, delay)
-    return () => window.clearTimeout(id)
+    }
+    runRollingRefresh()
+    const id = window.setInterval(runRollingRefresh, JWT_ROLLING_CHECK_INTERVAL_MS)
+    return () => window.clearInterval(id)
   }, [pathname, tick])
 
   return null
@@ -183,6 +228,30 @@ export function CustomerAuthBootstrap() {
   const router = useRouter()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { queryClient } = useRouteContext({ from: '__root__' })
+
+  useEffect(() => {
+    const onReady = (event: Event) => {
+      const target = (event as CustomEvent<{ target?: string }>).detail?.target ?? getPendingLiffStateDeepLink()
+      if (!target) return
+      void router.navigate({ to: target, replace: true } as never)
+    }
+    window.addEventListener(LIFF_STATE_DEEPLINK_READY, onReady)
+    return () => window.removeEventListener(LIFF_STATE_DEEPLINK_READY, onReady)
+  }, [router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    const shouldReset = url.searchParams.get('resetSession') === '1' || url.searchParams.get('clean') === '1'
+    if (!shouldReset) return
+
+    clearCustomerSession()
+    window.sessionStorage.clear()
+    void queryClient?.clear()
+    url.searchParams.delete('resetSession')
+    url.searchParams.delete('clean')
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [queryClient])
 
   useEffect(() => {
     void scheduleCustomerAuthEnsure(router, pathname, queryClient)

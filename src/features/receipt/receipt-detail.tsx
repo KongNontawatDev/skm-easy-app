@@ -9,10 +9,11 @@ import {
 import { Download, Receipt as ReceiptIcon, AlertCircle, User, Car, CreditCard } from 'lucide-react'
 import { useParams } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { getReceiptById } from '@/lib/mock-data'
 import { useCustomerToken } from '@/hooks/use-customer-contracts'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import { decodeReceiptApiId, mapReceiptApiRowToReceiptData } from '@/lib/legacy-billing-from-api'
+import { mapLegacyContractDetailToContractData } from '@/lib/legacy-contract-detail-map'
+import { generateReceiptPDF } from '@/lib/pdf-generator'
 
 export function ReceiptDetail() {
   const { receiptId } = useParams({ from: '/receipt/detail/$receiptId' })
@@ -28,14 +29,15 @@ export function ReceiptDetail() {
       const row = rows.find((r) => String(r.id) === apiReceiptRawId)
       if (!row) return null
       const contNo = String(row.contractNumber ?? row.contno ?? row.CONTNO ?? '')
-      const br = apiReceiptRawId.split(':')[0] ?? ''
-      const fallbackRef = br && contNo ? `${br}:${contNo}` : ''
-      return mapReceiptApiRowToReceiptData(row, fallbackRef)
+      const fallbackRef = contNo
+      const detailRes = contNo ? await skmApi.get(`/me/contracts/${encodeURIComponent(contNo)}`) : null
+      const detailRow = detailRes ? unwrapData<Record<string, unknown>>(detailRes) : {}
+      const contract = contNo ? mapLegacyContractDetailToContractData(detailRow, contNo) : null
+      return mapReceiptApiRowToReceiptData(row, fallbackRef, contract)
     },
   })
 
-  const receipt =
-    hasToken && apiReceiptRawId ? apiReceipt ?? undefined : getReceiptById(receiptId)
+  const receipt = apiReceipt ?? undefined
 
   if (hasToken && apiReceiptRawId && isLoading) {
     return (
@@ -270,7 +272,7 @@ export function ReceiptDetail() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                /* ดาวน์โหลด — ต่อในอนาคต */
+                if (receipt) generateReceiptPDF(receipt)
               }}
             >
               <Download className="mr-2 h-5 w-5" />

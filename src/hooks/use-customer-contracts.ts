@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import { mapLegacyContractRow } from '@/lib/legacy-contract-mapper'
+import { hasCustomerSession } from '@/lib/customer-session'
 import type { ContractCard } from '@/features/home/types'
 
 export function useCustomerToken(): boolean {
-  if (typeof localStorage === 'undefined') return false
-  return !!localStorage.getItem('skm_access_token') || !!localStorage.getItem('skm_refresh_token')
+  return hasCustomerSession()
 }
 
 /** รายการสัญญา — แชร์ queryKey กับหน้าแรก (`me-contracts`) */

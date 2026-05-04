@@ -12,8 +12,15 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react'
+import { useEffect } from 'react'
 import { useRouter, useSearch, useNavigate } from '@tanstack/react-router'
-import { getPaymentsByContract, getContractById } from '@/lib/mock-data'
+import { useQuery } from '@tanstack/react-query'
+import { useCustomerToken } from '@/hooks/use-customer-contracts'
+import { skmApi, unwrapData } from '@/lib/skm-api'
+import {
+  mapLegacyContractDetailToContractData,
+  mapLegacyInstallmentsToPayments,
+} from '@/lib/legacy-contract-detail-map'
 import { calculatePaymentBreakdown, calculateTotalOverdueAmount, getOverdueCount } from '@/lib/payment-utils'
 
 interface PaymentSearchParams {
@@ -24,19 +31,38 @@ export function PaymentList() {
   const router = useRouter()
   const navigate = useNavigate()
   const search = useSearch({ from: '/installment/pay/' }) as PaymentSearchParams
+  const hasToken = useCustomerToken()
 
   // Get contractId from URL parameters
   const contractId = search.contractId
 
-  // ใช้ข้อมูลจากข้อมูลกลาง
-  const contract = contractId ? getContractById(contractId) : null
-  const allPayments = contractId ? getPaymentsByContract(contractId) : []
+  useEffect(() => {
+    if (!contractId) router.navigate({ to: '/installment' })
+  }, [contractId, router])
 
-  // Redirect to installment page if no contractId
-  if (!contractId) {
-    router.navigate({ to: '/installment' })
-    return null
-  }
+  const { data: apiContract, isLoading: contractLoading } = useQuery({
+    queryKey: ['me-contract-detail-pay', contractId],
+    enabled: hasToken && !!contractId,
+    queryFn: async () => {
+      const res = await skmApi.get(`/me/contracts/${encodeURIComponent(contractId)}`)
+      const row = unwrapData<Record<string, unknown>>(res)
+      return mapLegacyContractDetailToContractData(row, contractId)
+    },
+  })
+
+  const { data: apiPayments, isLoading: paymentsLoading } = useQuery({
+    queryKey: ['me-installments-pay', contractId],
+    enabled: hasToken && !!contractId,
+    queryFn: async () => {
+      const res = await skmApi.get(`/me/contracts/${encodeURIComponent(contractId)}/installments`)
+      const rows = unwrapData<Record<string, unknown>[]>(res)
+      return mapLegacyInstallmentsToPayments(rows, contractId)
+    },
+  })
+
+  const contract = apiContract ?? null
+  const allPayments = apiPayments ?? []
+  const isLoading = contractLoading || paymentsLoading
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -85,12 +111,39 @@ export function PaymentList() {
   const totalOverdueAmount = calculateTotalOverdueAmount(allPayments)
   const overdueCount = getOverdueCount(allPayments)
 
+  if (!contractId) {
+    return null
+  }
+
+  if (!hasToken) {
+    return (
+      <MobileLayout>
+        <MobileHeader title="รายการชำระเงิน" />
+        <MobileContent>
+          <MobileCard>
+            <div className="text-center py-8">
+              <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">เข้าสู่ระบบเพื่อดูข้อมูลการชำระเงิน</p>
+            </div>
+          </MobileCard>
+        </MobileContent>
+        <BottomNavigation currentPath="/installment" />
+      </MobileLayout>
+    )
+  }
+
   return (
     <MobileLayout>
       <MobileHeader title="รายการชำระเงิน" />
       <MobileContent>
+        {isLoading ? (
+          <MobileCard>
+            <p className="py-6 text-center text-gray-500">กำลังโหลด...</p>
+          </MobileCard>
+        ) : null}
+
         {/* Contract Info */}
-        {contract && (
+        {contract && !isLoading && (
           <MobileCard>
             <div className="flex items-center space-x-3 mb-3">
               <CreditCard className="h-5 w-5 text-blue-600" />
@@ -123,54 +176,56 @@ export function PaymentList() {
         )}
 
         {/* Payments List */}
-        <div className="space-y-3">
-          {allPayments.map((payment) => (
-            <MobileCard key={payment.id}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+        {!isLoading && (
+          <div className="space-y-3">
+            {allPayments.map((payment) => (
+              <MobileCard key={payment.id}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">งวดที่ {payment.installmentNo}</h4>
+                      <p className="text-sm text-gray-600">{formatDate(payment.dueDate)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">งวดที่ {payment.installmentNo}</h4>
-                    <p className="text-sm text-gray-600">{formatDate(payment.dueDate)}</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
-                  {getStatusText(payment.status)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="text-lg font-semibold text-green-600">
-                    {payment.status === 'pending' || payment.status === 'overdue' 
-                      ? formatNumber(calculatePaymentBreakdown(payment).totalAmount)
-                      : formatNumber(payment.amount)
-                    } บาท
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                    {getStatusText(payment.status)}
                   </span>
                 </div>
-              </div>
 
-              {payment.status === 'pending' || payment.status === 'overdue' ? (
-                <MobileButton
-                  onClick={() => handlePayNow(payment)}
-                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  <QrCode className="h-4 w-4 mr-2" />
-                  ชำระเงิน
-                </MobileButton>
-              ) : (
-                <div className="text-center text-sm text-gray-500 py-2">
-                  ชำระแล้ว
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <span className="text-lg font-semibold text-green-600">
+                      {payment.status === 'pending' || payment.status === 'overdue' 
+                        ? formatNumber(calculatePaymentBreakdown(payment).totalAmount)
+                        : formatNumber(payment.amount)
+                      } บาท
+                    </span>
+                  </div>
                 </div>
-              )}
-            </MobileCard>
-          ))}
-        </div>
 
-        {allPayments.length === 0 && (
+                {payment.status === 'pending' || payment.status === 'overdue' ? (
+                  <MobileButton
+                    onClick={() => handlePayNow(payment)}
+                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    <QrCode className="h-4 w-4 mr-2" />
+                    ชำระเงิน
+                  </MobileButton>
+                ) : (
+                  <div className="text-center text-sm text-gray-500 py-2">
+                    ชำระแล้ว
+                  </div>
+                )}
+              </MobileCard>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && allPayments.length === 0 && (
           <MobileCard>
             <div className="text-center py-8">
               <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />

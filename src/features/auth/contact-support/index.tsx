@@ -1,4 +1,4 @@
-import { Phone, Mail, MessageCircle } from 'lucide-react'
+import { Phone, Mail, MessageCircle, MapPin } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 const SUPPORT_CHANNELS = [
@@ -6,28 +6,37 @@ const SUPPORT_CHANNELS = [
     id: 'phone',
     icon: Phone,
     title: 'โทรศัพท์',
-    value: '02-123-4567',
-    subtitle: 'จันทร์–ศุกร์ 08:00–17:00',
-    href: 'tel:021234567',
+    value: '02-017-9009',
+    subtitle: 'จ.–ส. เวลา 08:00–17:00 น.',
+    href: 'tel:020179009',
     color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400',
   },
   {
     id: 'line',
     icon: MessageCircle,
-    title: 'LINE',
-    value: '@SKMEasy',
-    subtitle: 'แชทสอบถามได้ตลอด 24 ชม.',
-    href: 'https://line.me/R/ti/p/@SKMEasy',
+    title: 'LINE Official',
+    value: '@skm1991',
+    subtitle: 'แชทสอบถาม ส่งสลิป แจ้งชำระ',
+    href: 'https://lin.ee/8rfP0qc',
     color: 'text-green-600 bg-green-50 dark:bg-green-950/40 dark:text-green-400',
   },
   {
     id: 'email',
     icon: Mail,
     title: 'อีเมล',
-    value: 'support@skm-easy.com',
-    subtitle: 'ตอบกลับภายใน 24 ชั่วโมง',
-    href: 'mailto:support@skm-easy.com',
+    value: 'skm1991.adm@gmail.com',
+    subtitle: 'ตอบกลับภายใน 1 วันทำการ',
+    href: 'mailto:skm1991.adm@gmail.com',
     color: 'text-orange-600 bg-orange-50 dark:bg-orange-950/40 dark:text-orange-400',
+  },
+  {
+    id: 'address',
+    icon: MapPin,
+    title: 'ที่อยู่',
+    value: '308 ถ.แจ้งสนิท ต.ในเมือง อ.เมือง จ.ยโสธร 35000',
+    subtitle: 'บริษัท สหกิจ มอเตอร์ไบค์ จำกัด (สำนักงานใหญ่)',
+    href: 'https://maps.app.goo.gl/h4sgzHkD2HwCTB1e6',
+    color: 'text-red-600 bg-red-50 dark:bg-red-950/40 dark:text-red-400',
   },
 ] as const
 
@@ -51,8 +60,8 @@ export function ContactSupport() {
           <a
             key={ch.id}
             href={ch.href}
-            target={ch.id === 'line' ? '_blank' : undefined}
-            rel={ch.id === 'line' ? 'noopener noreferrer' : undefined}
+            target={ch.id === 'line' || ch.id === 'address' ? '_blank' : undefined}
+            rel={ch.id === 'line' || ch.id === 'address' ? 'noopener noreferrer' : undefined}
             className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-colors active:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:active:bg-gray-700/60"
           >
             <div

@@ -16,10 +16,12 @@ import { fetchPublicPromotions } from '@/lib/cms-public-api'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import type { ContractCard, PromotionAd, WelcomeData } from './types'
 
+import { Skeleton } from '@/components/ui/skeleton'
+
 export function Home() {
   const hasToken = useCustomerToken()
 
-  const { data: promotions = [] } = useQuery({
+  const promotionsQuery = useQuery({
     queryKey: ['public-promotions'],
     queryFn: fetchPublicPromotions,
     select: (rows): PromotionAd[] =>
@@ -33,7 +35,7 @@ export function Home() {
       })),
   })
 
-  const { data: contracts = [] } = useCustomerContracts()
+  const contractsQuery = useCustomerContracts()
 
   const profileQuery = useQuery({
     queryKey: ['me-profile'],
@@ -78,8 +80,8 @@ export function Home() {
         lastLogin: '',
       }
 
-  const displayContracts: ContractCard[] = hasToken ? contracts : []
-  const displayPromotions: PromotionAd[] = promotions
+  const displayContracts: ContractCard[] = hasToken ? (contractsQuery.data ?? []) : []
+  const displayPromotions: PromotionAd[] = promotionsQuery.data ?? []
 
   const avatarFallback =
     (hasToken ? welcome.userName : '').trim().charAt(0) ||
@@ -96,35 +98,58 @@ export function Home() {
         <div className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              <MobileAvatar
-                src={welcome.avatarUrl}
-                alt={displayLineName}
-                fallback={avatarFallback}
-                size="lg"
-                className="shrink-0 shadow-md ring-2 ring-white dark:ring-gray-800"
-              />
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#06C755]">
-                  LINE
-                </p>
-                <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {displayLineName}
-                </p>
-              </div>
+              {hasToken && profileQuery.isLoading ? (
+                <>
+                  <Skeleton className="h-12 w-12 rounded-full shrink-0 shadow-md ring-2 ring-white dark:ring-gray-800" />
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <Skeleton className="h-3 w-8" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <MobileAvatar
+                    src={welcome.avatarUrl}
+                    alt={displayLineName}
+                    fallback={avatarFallback}
+                    size="lg"
+                    className="shrink-0 shadow-md ring-2 ring-white dark:ring-gray-800"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#06C755]">
+                      LINE
+                    </p>
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {displayLineName}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
             <div className="shrink-0">
               <MobileHeaderMenu />
             </div>
           </div>
 
-          <ContractCardsCarousel contracts={displayContracts} mode="home" />
+          <ContractCardsCarousel
+            contracts={displayContracts}
+            mode="home"
+            isLoading={hasToken && contractsQuery.isLoading}
+            isError={hasToken && contractsQuery.isError}
+            onRetry={() => contractsQuery.refetch()}
+          />
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">เมนูด่วน</h2>
             <QuickMenuGrid items={quickMenuItems} />
           </div>
 
-          <PromotionBanner promotions={displayPromotions} />
+          <PromotionBanner
+            promotions={displayPromotions}
+            isLoading={promotionsQuery.isLoading}
+            isError={promotionsQuery.isError}
+            onRetry={() => promotionsQuery.refetch()}
+          />
         </div>
       </MobileContent>
 

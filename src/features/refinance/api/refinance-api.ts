@@ -1,7 +1,10 @@
-import { MockApiService } from '@/lib/mock-api'
-import type { 
-  RefinanceVehicle, 
-  RefinanceCheckRequest, 
+/**
+ * Refinance API Service — placeholder for production
+ * รีไฟแนนซ์ยังไม่มี API จริง — แสดง "เร็วๆ นี้" ใน UI
+ */
+import type {
+  RefinanceVehicle,
+  RefinanceCheckRequest,
   RefinanceCheckResponse,
   CreditCheckForm,
   CreditCheckResponse,
@@ -9,38 +12,31 @@ import type {
 } from '../types'
 
 export class RefinanceApiService {
-  // Get all refinance eligible vehicles
   static async getRefinanceVehicles(): Promise<RefinanceVehicle[]> {
-    return MockApiService.get<RefinanceVehicle[]>('/refinance/vehicles')
+    return [] as unknown as RefinanceVehicle[]
   }
 
-  // Get specific vehicle for refinance
-  static async getRefinanceVehicle(vehicleId: string): Promise<RefinanceVehicle> {
-    return MockApiService.get<RefinanceVehicle>(`/refinance/vehicles/${vehicleId}`)
+  static async getRefinanceVehicle(_vehicleId: string): Promise<RefinanceVehicle> {
+    throw new Error('ฟีเจอร์รีไฟแนนซ์ยังไม่เปิดให้บริการ')
   }
 
-  // Check refinance eligibility
-  static async checkRefinanceEligibility(request: RefinanceCheckRequest): Promise<RefinanceCheckResponse> {
-    return MockApiService.post<RefinanceCheckResponse>('/refinance/check', request)
+  static async checkRefinanceEligibility(_request: RefinanceCheckRequest): Promise<RefinanceCheckResponse> {
+    throw new Error('ฟีเจอร์รีไฟแนนซ์ยังไม่เปิดให้บริการ')
   }
 
-  // Submit credit check form
-  static async submitCreditCheck(form: CreditCheckForm): Promise<CreditCheckResponse> {
-    return MockApiService.post<CreditCheckResponse>('/credit-check/submit', form)
+  static async submitCreditCheck(_form: CreditCheckForm): Promise<CreditCheckResponse> {
+    throw new Error('ฟีเจอร์ตรวจสอบเครดิตยังไม่เปิดให้บริการ')
   }
 
-  // Get credit check results
   static async getCreditCheckResults(): Promise<CreditCheckResult[]> {
-    return MockApiService.get<CreditCheckResult[]>('/credit-check/results')
+    return [] as unknown as CreditCheckResult[]
   }
 
-  // Get specific credit check result
-  static async getCreditCheckResult(resultId: string): Promise<CreditCheckResult> {
-    return MockApiService.get<CreditCheckResult>(`/credit-check/results/${resultId}`)
+  static async getCreditCheckResult(_resultId: string): Promise<CreditCheckResult> {
+    throw new Error('ฟีเจอร์ตรวจสอบเครดิตยังไม่เปิดให้บริการ')
   }
 
-  // Update credit check result status
-  static async updateCreditCheckStatus(resultId: string, status: 'approved' | 'rejected', notes?: string): Promise<CreditCheckResult> {
-    return MockApiService.patch<CreditCheckResult>(`/credit-check/results/${resultId}`, { status, notes })
+  static async updateCreditCheckStatus(_resultId: string, _status: 'approved' | 'rejected', _notes?: string): Promise<CreditCheckResult> {
+    throw new Error('ฟีเจอร์ตรวจสอบเครดิตยังไม่เปิดให้บริการ')
   }
 }

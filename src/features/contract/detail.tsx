@@ -16,16 +16,59 @@ import {
   QrCode,
   Receipt,
   CreditCard,
+  Copy,
+  Check,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { getContractById } from '@/lib/mock-data'
+import { useQuery } from '@tanstack/react-query'
+import { skmApi, unwrapData } from '@/lib/skm-api'
+import { useCustomerToken } from '@/hooks/use-customer-contracts'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/shared/error-state'
+import { mapLegacyContractDetailToContractData } from '@/lib/legacy-contract-detail-map'
 
 export function ContractDetail() {
   const { id: contractId } = useParams({ from: '/contract/$id' })
   const navigate = useNavigate()
+  const hasToken = useCustomerToken()
 
-  // ใช้ข้อมูลจากข้อมูลกลาง
-  const contract = getContractById(contractId)
+  const contractQuery = useQuery({
+    queryKey: ['contract-detail', contractId],
+    enabled: hasToken && !!contractId,
+    queryFn: async () => {
+      const res = await skmApi.get(`/me/contracts/${encodeURIComponent(contractId)}`)
+      return unwrapData<Record<string, unknown>>(res)
+    },
+  })
+
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+  const rawContract = contractQuery.data as Record<string, unknown> | undefined
+  const contract = rawContract
+    ? mapLegacyContractDetailToContractData(rawContract, contractId)
+    : undefined
+
+  if (contractQuery.isLoading) {
+    return (
+      <MobileLayout>
+        <MobileHeader title="Loading..." />
+        <MobileContent>
+          <Skeleton />
+        </MobileContent>
+      </MobileLayout>
+    )
+  }
+
+  if (contractQuery.isError) {
+    return (
+      <MobileLayout>
+        <MobileHeader title="Error" />
+        <MobileContent>
+          <ErrorState />
+        </MobileContent>
+      </MobileLayout>
+    )
+  }
 
   if (!contract) {
     return (
@@ -53,29 +96,62 @@ export function ContractDetail() {
     return num.toLocaleString('th-TH')
   }
 
+  const formatOptionalDate = (value?: string) => {
+    if (!value) return '-'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return date.toLocaleDateString('th-TH', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+  }
+
+  const copyToClipboard = async (field: string, value?: string) => {
+    if (!value || value === '-') return
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      window.setTimeout(() => setCopiedField(null), 1200)
+    } catch {
+      alert('ไม่สามารถคัดลอกได้')
+    }
+  }
+
+  const CopyableValue = ({ field, value }: { field: string; value?: string }) => {
+    const displayValue = value?.trim() || '-'
+    const canCopy = displayValue !== '-'
+
+    return (
+      <span className="flex min-w-0 items-center justify-end gap-2 text-right font-medium">
+        <span className="truncate">{displayValue}</span>
+        {canCopy ? (
+          <button
+            type="button"
+            aria-label={`คัดลอก${field}`}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+            onClick={() => void copyToClipboard(field, displayValue)}
+          >
+            {copiedField === field ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          </button>
+        ) : null}
+      </span>
+    )
+  }
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
+      case 'a':
       case 'active':
         return 'bg-green-100 text-green-800'
+      case 'o':
       case 'overdue':
         return 'bg-red-100 text-red-800'
+      case 'c':
       case 'completed':
         return 'bg-blue-100 text-blue-800'
       default:
         return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'ใช้งานอยู่'
-      case 'overdue':
-        return 'ค้างชำระ'
-      case 'completed':
-        return 'เสร็จสิ้น'
-      default:
-        return status
     }
   }
 
@@ -107,9 +183,15 @@ export function ContractDetail() {
     alert('ดาวน์โหลดตารางงวดผ่อนชำระ')
   }
 
+  const vehicle = contract.vehicleInfo ?? contract
+  const customer = contract.customerInfo ?? {}
+  const financial = contract.financialInfo ?? contract
+  const contractInfo = contract.contractInfo ?? {}
+  const remainingAmount = Number(financial.remainingAmount ?? contract.remainingAmount) || 0
+
   return (
     <MobileLayout>
-      <MobileHeader title={`สัญญา ${contract.contractNumber}`} />
+      <MobileHeader title={`สัญญา ${contract.contractNumber || contract.contract_number || contractId}`} />
       <MobileContent className='pb-20'>
         {/* ข้อมูลรถ */}
         <MobileCard>
@@ -121,19 +203,35 @@ export function ContractDetail() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">ยี่ห้อ/รุ่น:</span>
-              <span className="font-medium">{contract.vehicleInfo.brand} {contract.vehicleInfo.model}</span>
+              <span className="font-medium">{vehicle.brand || ''} {vehicle.model || ''}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ปี:</span>
-              <span className="font-medium">{contract.vehicleInfo.year}</span>
+              <span className="font-medium">{vehicle.year || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">สี:</span>
-              <span className="font-medium">{contract.vehicleInfo.color}</span>
+              <span className="font-medium">{vehicle.color || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ทะเบียน:</span>
-              <span className="font-medium">{contract.vehicleInfo.plateNumber}</span>
+              <span className="font-medium">{vehicle.plateNumber || '-'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="shrink-0 text-gray-600">เลขเครื่อง:</span>
+              <CopyableValue field="เลขเครื่อง" value={vehicle.engineNumber} />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="shrink-0 text-gray-600">เลขตัวถัง:</span>
+              <CopyableValue field="เลขตัวถัง" value={vehicle.chassisNumber} />
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-600">วันครบกำหนดภาษี:</span>
+              <span className="text-right font-medium">{formatOptionalDate(vehicle.taxDueDate)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-600">วันครบกำหนดชำระภาษี:</span>
+              <span className="text-right font-medium">{formatOptionalDate(vehicle.taxPaymentDueDate)}</span>
             </div>
           </div>
         </MobileCard>
@@ -148,19 +246,19 @@ export function ContractDetail() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">ชื่อ-นามสกุล:</span>
-              <span className="font-medium">{contract.customerInfo.name}</span>
+              <span className="font-medium">{customer.name || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">โทรศัพท์:</span>
-              <span className="font-medium">{contract.customerInfo.phone}</span>
+              <span className="font-medium">{customer.phone || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">อีเมล:</span>
-              <span className="font-medium">{contract.customerInfo.email}</span>
+              <span className="font-medium">{customer.email || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ที่อยู่:</span>
-              <span className="font-medium text-right">{contract.customerInfo.address}</span>
+              <span className="font-medium text-right">{customer.address || '-'}</span>
             </div>
           </div>
         </MobileCard>
@@ -175,27 +273,23 @@ export function ContractDetail() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">ยอดเงินรวม:</span>
-              <span className="font-medium">{formatNumber(contract.financialInfo.totalAmount)} บาท</span>
+              <span className="font-medium">{formatNumber(Number(financial.totalAmount) || 0)} บาท</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">เงินดาวน์:</span>
-              <span className="font-medium">{formatNumber(contract.financialInfo.downPayment)} บาท</span>
+              <span className="font-medium">{formatNumber(Number(financial.downPayment) || 0)} บาท</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">เงินกู้:</span>
-              <span className="font-medium">{formatNumber(contract.financialInfo.loanAmount)} บาท</span>
+              <span className="font-medium">{formatNumber(Number(financial.loanAmount) || remainingAmount)} บาท</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">งวดผ่อน:</span>
-              <span className="font-medium">{formatNumber(contract.financialInfo.monthlyPayment)} บาท/เดือน</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">ดอกเบี้ย:</span>
-              <span className="font-medium">{contract.financialInfo.interestRate}%</span>
+              <span className="font-medium">{Number(financial.monthlyPayment) ? `${formatNumber(Number(financial.monthlyPayment))} บาท` : '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ยอดคงเหลือ:</span>
-              <span className="font-medium text-red-600">{formatNumber(contract.financialInfo.remainingAmount)} บาท</span>
+              <span className="font-medium text-red-600">{formatNumber(remainingAmount)} บาท</span>
             </div>
           </div>
         </MobileCard>
@@ -210,29 +304,29 @@ export function ContractDetail() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">เลขที่สัญญา:</span>
-              <span className="font-medium">{contract.contractNumber}</span>
+              <span className="font-medium">{contract.contractNumber || contract.contract_number || contractId}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">วันที่เริ่มสัญญา:</span>
-              <span className="font-medium">{formatDate(contract.contractInfo.startDate)}</span>
+              <span className="font-medium">{formatOptionalDate(contractInfo.startDate)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">วันที่สิ้นสุดสัญญา:</span>
-              <span className="font-medium">{formatDate(contract.contractInfo.endDate)}</span>
+              <span className="font-medium">{formatOptionalDate(contractInfo.endDate)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">ระยะเวลา:</span>
-              <span className="font-medium">{contract.financialInfo.term} เดือน</span>
+              <span className="font-medium">{contractInfo.term || financial.term || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">สถานะ:</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contract.contractInfo.status)}`}>
-                {getStatusText(contract.contractInfo.status)}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contractInfo.status || contract.status || 'active')}`}>
+                {contractInfo.status || contract.status || 'Active'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">งวดถัดไป:</span>
-              <span className="font-medium">{formatDate(contract.nextPaymentDate)}</span>
+              <span className="font-medium">{contract.nextPaymentDate ? formatDate(contract.nextPaymentDate) : '-'}</span>
             </div>
           </div>
         </MobileCard>

@@ -8,7 +8,6 @@ import { MobileCard } from '@/components/mobile/mobile-card'
 import { MobileButton } from '@/components/mobile/mobile-button'
 import { BottomNavigation } from '@/components/mobile/bottom-navigation'
 import { FileText } from 'lucide-react'
-import { getInvoicesByContract, getContractById } from '@/lib/mock-data'
 import { useCustomerToken } from '@/hooks/use-customer-contracts'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import { mapInstallmentRowToInvoiceData } from '@/lib/legacy-billing-from-api'
@@ -37,21 +36,47 @@ export function InvoiceList() {
     },
   })
 
-  const apiInvoices = useMemo(() => {
-    if (!apiRows?.length) return []
-    return apiRows.map((row) => mapInstallmentRowToInvoiceData(row, contractId))
-  }, [apiRows, contractId])
-
   const contractFromApi = useMemo(() => {
     if (!hasToken || !detailRow || Object.keys(detailRow).length === 0) return null
     return mapLegacyContractDetailToContractData(detailRow, contractId)
   }, [hasToken, detailRow, contractId])
 
-  const mockContract = !hasToken ? getContractById(contractId) : undefined
-  const mockInvoices = !hasToken ? getInvoicesByContract(contractId) : []
+  const apiInvoices = useMemo(() => {
+    if (!apiRows?.length) return []
+    const mapped = apiRows.map((row) => mapInstallmentRowToInvoiceData(row, contractId, contractFromApi))
 
-  const contract = hasToken ? contractFromApi ?? undefined : mockContract
-  const allInvoices = hasToken ? apiInvoices : mockInvoices
+    // เรียงตามงวดจากน้อยไปมาก
+    const sortedAsc = [...mapped].sort((a, b) => {
+      const pA = Number(a.invoiceNumber.split('-').pop()) || 0
+      const pB = Number(b.invoiceNumber.split('-').pop()) || 0
+      return pA - pB
+    })
+
+    // กรองเอาเฉพาะงวดที่จ่ายแล้ว + งวดที่ยังไม่จ่ายงวดแรก (งวดถัดไป)
+    const filtered: typeof mapped = []
+    let foundFirstUnpaid = false
+    
+    for (const inv of sortedAsc) {
+      if (inv.status === 'paid') {
+        filtered.push(inv)
+      } else {
+        if (!foundFirstUnpaid) {
+          filtered.push(inv) // งวดถัดไปที่ต้องจ่าย
+          foundFirstUnpaid = true
+        }
+      }
+    }
+
+    // เรียงเอาล่าสุดขึ้นก่อน
+    return filtered.sort((a, b) => {
+      const pA = Number(a.invoiceNumber.split('-').pop()) || 0
+      const pB = Number(b.invoiceNumber.split('-').pop()) || 0
+      return pB - pA
+    })
+  }, [apiRows, contractId, contractFromApi])
+
+  const contract = contractFromApi ?? undefined
+  const allInvoices = apiInvoices
   const loading = hasToken && (detailLoading || rowsLoading)
 
   const formatDate = (dateString: string) => {
@@ -96,7 +121,7 @@ export function InvoiceList() {
   return (
     <MobileLayout>
       <MobileHeader title="ใบแจ้งหนี้" />
-      <MobileContent>
+      <MobileContent className="pb-24">
         {loading ? (
           <MobileCard>
             <p className="py-6 text-center text-gray-500">กำลังโหลด...</p>

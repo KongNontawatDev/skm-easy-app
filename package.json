@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "npx vite",
-    "build": "npx vite build",
+    "build": "npx vite build --mode production",
+    "postbuild": "node -e \"const fs=require('fs'); if(fs.existsSync('.htaccess')){fs.copyFileSync('.htaccess','dist/.htaccess'); console.log('copied .htaccess to dist');}\"",
     "build:analyze": "npx vite build --mode analyze",
     "preview": "npx vite preview",
     "lint": "npx eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -20,7 +21,7 @@
     "test:watch": "echo \"No tests specified\" && exit 0",
     "test:coverage": "echo \"No tests specified\" && exit 0",
     "knip": "npx knip",
-    "perf:audit": "npx lighthouse http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io --output=html --output-path=./lighthouse-report.html"
+    "perf:audit": "npx lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.42.1",
@@ -57,7 +58,9 @@
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.12",
+    "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.542.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.1",

@@ -71,9 +71,9 @@ export function PromotionDetail() {
       <MobileHeader title="รายละเอียดโปรโมชั่น" />
       <MobileContent className="pb-20">
         <div className="space-y-6">
-          <div className="relative h-56 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-700">
+          <div className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-700">
             {promotion.imageUrl ? (
-              <img src={promotion.imageUrl} alt={promotion.title} className="h-full w-full object-cover" />
+              <img src={promotion.imageUrl} alt={promotion.title} className="w-full h-auto" />
             ) : null}
             {isExpired ? (
               <span className="absolute right-3 top-3 rounded-full bg-red-600 px-3 py-1 text-xs font-medium text-white">
@@ -97,7 +97,7 @@ export function PromotionDetail() {
               </span>
             </div>
             <div
-              className="prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
+              className="cms-rich-content prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
               dangerouslySetInnerHTML={{ __html: promotion.descriptionHtml }}
             />
           </div>

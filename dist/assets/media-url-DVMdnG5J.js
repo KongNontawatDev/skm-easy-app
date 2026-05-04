@@ -1,1 +1,0 @@
-function n(){const t="http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1";if(/^https?:\/\//i.test(t))try{return new URL(t).origin}catch{}return typeof window<"u"?window.location.origin:"http://127.0.0.1:3000"}function r(t){if(!t)return"";if(t.startsWith("http://")||t.startsWith("https://"))return t;const i=t.startsWith("/")?t:`/${t}`;return`${n()}${i}`}export{r};

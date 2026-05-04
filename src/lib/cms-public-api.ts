@@ -1,5 +1,5 @@
 /**
- * อ่านโปรโมชัน / บทความ / คู่มือจาก Public API (ข้อมูลจากฐานข้อมูลผ่าน skm-easy-api-v2)
+ * อ่านโปรโมชัน / บทความ / คู่มือจาก Public API (ข้อมูลจากฐานข้อมูลผ่าน skm-easy-api-v3)
  */
 import { isAxiosError } from 'axios'
 import { skmApi, unwrapData } from '@/lib/skm-api'

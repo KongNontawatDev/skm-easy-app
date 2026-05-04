@@ -8,7 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { useCreditCheckSubmit } from '../hooks'
-import { mockOccupations, mockProvinces } from '../data/mock-data'
+
+// ข้อมูลอ้างอิง — static constants
+const occupations = [
+  'พนักงานบริษัท', 'ข้าราชการ', 'เจ้าของธุรกิจ', 'ฟรีแลนซ์', 'เกษตรกร',
+  'ครู/อาจารย์', 'แพทย์/พยาบาล', 'วิศวกร', 'ทนายความ', 'นักบัญชี', 'อื่นๆ',
+]
+const provinces = [
+  'กรุงเทพมหานคร', 'เชียงใหม่', 'เชียงราย', 'นครราชสีมา', 'ขอนแก่น',
+  'อุดรธานี', 'อุบลราชธานี', 'สงขลา', 'ภูเก็ต', 'พัทยา', 'อื่นๆ',
+]
 import type { CreditCheckForm, CreditCheckResponse } from '../types'
 
 const creditCheckSchema = z.object({
@@ -227,7 +236,7 @@ export function CreditCheckForm({ onSuccess, onCancel }: CreditCheckFormProps) {
                     <SelectValue placeholder="เลือกจังหวัด" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockProvinces.map((province) => (
+                    {provinces.map((province) => (
                       <SelectItem key={province} value={province}>
                         {province}
                       </SelectItem>
@@ -308,7 +317,7 @@ export function CreditCheckForm({ onSuccess, onCancel }: CreditCheckFormProps) {
                   <SelectValue placeholder="เลือกอาชีพ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockOccupations.map((occupation) => (
+                  {occupations.map((occupation) => (
                     <SelectItem key={occupation} value={occupation}>
                       {occupation}
                     </SelectItem>

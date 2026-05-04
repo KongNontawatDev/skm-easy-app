@@ -1,5 +1,5 @@
 /**
- * เบอร์มือถือไทย — ต้องสอดคล้องกับ `skm-easy-api-v2` (`parseCustomerThaiMobile`)
+ * เบอร์มือถือไทย — ต้องสอดคล้องกับ `skm-easy-api-v3` (`parseCustomerThaiMobile`)
  * เพื่อให้ body `phone` ที่ส่งไป `/auth/customer/otp/*` เป็นเบอร์จริงของผู้ใช้เสมอ
  */
 

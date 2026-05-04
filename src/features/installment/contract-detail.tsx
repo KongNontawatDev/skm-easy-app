@@ -18,7 +18,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react'
-import { getContractById, type ContractData } from '@/lib/mock-data'
+import type { ContractData } from '@/types/billing'
 import {
   MobileLayout,
   MobileHeader,
@@ -45,13 +45,12 @@ export function ContractDetail() {
     },
   })
 
-  const mockContract = !hasToken ? getContractById(id) : undefined
-  const display = hasToken ? contract : mockContract
+  const display = contract ?? undefined
 
-  if (!hasToken && !mockContract) {
+  if (!hasToken) {
     return (
       <MobileLayout>
-        <MobileHeader title='ไม่พบข้อมูลสัญญา' />
+        <MobileHeader title='กรุณาเข้าสู่ระบบ' />
         <MobileContent>
           <MobileCard>
             <p className='py-8 text-center text-gray-500'>เข้าสู่ระบบเพื่อดูรายละเอียดสัญญาจากระบบ</p>

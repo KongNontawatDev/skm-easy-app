@@ -17,32 +17,41 @@ import {
 } from 'lucide-react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { getInvoiceById } from '@/lib/mock-data'
 import { useCustomerToken } from '@/hooks/use-customer-contracts'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import { decodeInstallmentInvoiceId, mapInstallmentRowToInvoiceData } from '@/lib/legacy-billing-from-api'
+import { mapLegacyContractDetailToContractData } from '@/lib/legacy-contract-detail-map'
+import { generateInvoicePDF } from '@/lib/pdf-generator'
 
 export function InvoiceDetail() {
   const { invoiceId } = useParams({ from: '/invoice/detail/$invoiceId' })
   const navigate = useNavigate()
   const hasToken = useCustomerToken()
   const decoded = decodeInstallmentInvoiceId(invoiceId)
+  const decodedContractRef = decoded?.r
+  const decodedPeriod = decoded?.p
 
   const { data: apiInvoice, isLoading } = useQuery({
-    queryKey: ['invoice-detail-api', invoiceId],
+    queryKey: ['invoice-detail-api', invoiceId, decodedContractRef, decodedPeriod],
     enabled: hasToken && !!decoded,
     queryFn: async () => {
-      const res = await skmApi.get(`/me/contracts/${encodeURIComponent(decoded!.r)}/installments`)
-      const rows = unwrapData<Record<string, unknown>[]>(res)
+      if (!decodedContractRef || !decodedPeriod) return null
+      const [installmentsRes, detailRes] = await Promise.all([
+        skmApi.get(`/me/contracts/${encodeURIComponent(decodedContractRef)}/installments`),
+        skmApi.get(`/me/contracts/${encodeURIComponent(decodedContractRef)}`),
+      ])
+      const rows = unwrapData<Record<string, unknown>[]>(installmentsRes)
+      const detailRow = unwrapData<Record<string, unknown>>(detailRes)
+      const contract = mapLegacyContractDetailToContractData(detailRow, decodedContractRef)
       const row = rows.find((r) => {
         const p = Number(r.periodNo ?? r.PERIOD ?? r.installmentNo ?? r.period ?? r.seq)
-        return Number.isFinite(p) && p === decoded!.p
+        return Number.isFinite(p) && p === decodedPeriod
       })
-      return row ? mapInstallmentRowToInvoiceData(row, decoded!.r) : null
+      return row ? mapInstallmentRowToInvoiceData(row, decodedContractRef, contract) : null
     },
   })
 
-  const invoice = hasToken && decoded ? apiInvoice ?? undefined : getInvoiceById(invoiceId)
+  const invoice = apiInvoice ?? undefined
 
   if (hasToken && decoded && isLoading) {
     return (
@@ -310,7 +319,7 @@ export function InvoiceDetail() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                /* ดาวน์โหลด — ต่อในอนาคต */
+                if (invoice) generateInvoicePDF(invoice)
               }}
             >
               <Download className="mr-2 h-5 w-5" />

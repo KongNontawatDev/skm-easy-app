@@ -16,6 +16,7 @@ import {
   BottomNavigation,
   MobileButton,
 } from '@/components/mobile'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ContractCardsCarousel } from '../home/components/contract-cards-carousel'
 import { InstallmentProgress } from '../home/components/installment-progress'
 import { calculateTotalOverdueAmount, getOverdueCount } from '@/lib/payment-utils'
@@ -47,10 +48,17 @@ interface InstallmentProps {
   contractIdFromSearch?: string
 }
 
+import { ErrorState } from '@/components/shared/error-state'
+
 export function Installment({ contractIdFromSearch }: InstallmentProps) {
   const navigate = useNavigate()
   const hasToken = useCustomerToken()
-  const { data: contracts = [], isLoading: contractsLoading } = useCustomerContracts()
+  const {
+    data: contracts = [],
+    isLoading: contractsLoading,
+    isError: contractsError,
+    refetch: refetchContracts,
+  } = useCustomerContracts()
 
   const [selectedContractIndex, setSelectedContractIndex] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -102,7 +110,7 @@ export function Installment({ contractIdFromSearch }: InstallmentProps) {
   const selectedContract = contracts[resolvedContractIndex] ?? null
   const contractRef = selectedContract?.id ?? ''
 
-  const { data: payments = [] } = useQuery({
+  const paymentsQuery = useQuery({
     queryKey: ['me-installments', contractRef, selectedContract?.contractNumber ?? ''],
     enabled: hasToken && !!contractRef,
     queryFn: async () => {
@@ -111,6 +119,8 @@ export function Installment({ contractIdFromSearch }: InstallmentProps) {
       return mapLegacyInstallmentsToPayments(rows, selectedContract?.contractNumber ?? contractRef)
     },
   })
+
+  const payments = useMemo(() => paymentsQuery.data ?? [], [paymentsQuery.data])
 
   const selectedProgress = useMemo(() => {
     if (!selectedContract) return null
@@ -186,10 +196,14 @@ export function Installment({ contractIdFromSearch }: InstallmentProps) {
       <MobileLayout>
         <MobileHeader title='ค่างวดรถ' showMoreMenu={true} />
         <MobileContent className='pb-48'>
-          <div className='flex h-64 items-center justify-center'>
-            <div className='text-center'>
-              <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600'></div>
-              <p className='text-gray-500'>กำลังโหลด...</p>
+          <div className='space-y-6'>
+            <Skeleton className='h-32 w-full rounded-xl' />
+            <Skeleton className='h-48 w-full rounded-xl' />
+            <div className='space-y-3'>
+              <Skeleton className='h-6 w-24' />
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className='h-20 w-full rounded-xl' />
+              ))}
             </div>
           </div>
         </MobileContent>
@@ -213,26 +227,41 @@ export function Installment({ contractIdFromSearch }: InstallmentProps) {
             </div>
           ) : null}
 
-          <ContractCardsCarousel
-            contracts={contracts}
-            mode='installment'
-            scrollToIndex={resolvedContractIndex}
-            activeContractId={contractIdFromSearch}
-          />
-
-          {contractsLoading && hasToken ? (
-            <p className='text-center text-sm text-gray-500'>กำลังโหลดสัญญา...</p>
-          ) : null}
-
-          {selectedProgress ? (
-            <InstallmentProgress
-              totalAmount={selectedProgress.totalAmount}
-              paidAmount={selectedProgress.paidAmount}
-              nextDueDate={selectedProgress.nextDueDate}
-              installmentIndex={selectedProgress.installmentIndex}
-              totalInstallments={selectedProgress.totalInstallments}
+          {contractsError ? (
+            <ErrorState
+              title="ไม่สามารถโหลดข้อมูลสัญญาได้"
+              onRetry={() => void refetchContracts()}
             />
-          ) : null}
+          ) : (
+            <ContractCardsCarousel
+              contracts={contracts}
+              mode='installment'
+              scrollToIndex={resolvedContractIndex}
+              activeContractId={contractIdFromSearch}
+              isLoading={hasToken && contractsLoading}
+            />
+          )}
+
+          {selectedContract && (
+            <>
+              {paymentsQuery.isError ? (
+                <ErrorState
+                  title="ไม่สามารถโหลดข้อมูลค่างวดได้"
+                  onRetry={() => void paymentsQuery.refetch()}
+                />
+              ) : (
+                <InstallmentProgress
+                  totalAmount={selectedProgress?.totalAmount ?? 0}
+                  paidAmount={selectedProgress?.paidAmount ?? 0}
+                  nextDueDate={selectedProgress?.nextDueDate ?? ''}
+                  installmentIndex={selectedProgress?.installmentIndex ?? 0}
+                  totalInstallments={selectedProgress?.totalInstallments ?? 0}
+                  nextAmount={selectedProgress?.nextAmount ?? 0}
+                  isLoading={hasToken && paymentsQuery.isLoading}
+                />
+              )}
+            </>
+          )}
 
           <div className='space-y-3'>
             <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>เมนูหลัก</h2>
@@ -242,6 +271,7 @@ export function Installment({ contractIdFromSearch }: InstallmentProps) {
                 variant='ghost'
                 className='h-auto w-full justify-start p-4'
                 onClick={() => goMenu(item.id)}
+                disabled={contractsLoading || paymentsQuery.isLoading}
               >
                 <div className='flex w-full items-center space-x-4'>
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full ${item.color}`}>

@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   },
   server: {
     // hostname เท่านั้น (ไม่ใส่ https:// หรือ path) — นำหน้าด้วย "." = อนุญาตทุก subdomain
-    allowedHosts: ['.ngrok-free.app', 'miniapp.line.me'],
+    allowedHosts: ['.ngrok-free.app', 'miniapp.line.me','effigial-inaccurately-heide.ngrok-free.dev'],
     proxy: {
       '/api': { target: apiProxyTarget, changeOrigin: true },
     },

@@ -1,5 +1,5 @@
 // Utility functions for payment calculations
-import { type PaymentData } from './mock-data'
+import { type PaymentData } from '@/types/billing'
 
 export interface PaymentBreakdown {
   baseAmount: number
@@ -13,18 +13,18 @@ export interface PaymentBreakdown {
 /**
  * คำนวณค่าต่างๆ สำหรับแต่ละงวด
  */
-export function calculatePaymentBreakdown(payment: { amount: number; dueDate: string }): PaymentBreakdown {
-  const baseAmount = payment.amount
+export function calculatePaymentBreakdown(payment: PaymentData): PaymentBreakdown {
+  const baseAmount = Math.max(0, payment.balanceAmount ?? payment.amount)
   const daysOverdue = Math.max(0, Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24)))
   
   // ค่าปรับล่าช้า (500 บาท ต่องวดที่ค้างเกิน 1 งวด)
-  const lateFee = daysOverdue > 0 ? 500 : 0
+  const lateFee = Math.max(0, payment.lateFee ?? 0)
   
   // ค่าติดตามหนี้ (10 บาท ต่องวดที่ค้างเกิน 1 งวด)
-  const collectionFee = daysOverdue > 0 ? 10 : 0
+  const collectionFee = Math.max(0, payment.collectionFee ?? 0)
   
   // ค่าธรรมเนียมอื่นๆ (5 บาท)
-  const otherFees = 5
+  const otherFees = Math.max(0, payment.otherFees ?? 0)
   
   const totalAmount = baseAmount + lateFee + collectionFee + otherFees
   
@@ -42,7 +42,7 @@ export function calculatePaymentBreakdown(payment: { amount: number; dueDate: st
  * คำนวณยอดรวมของงวดที่ค้างชำระทั้งหมด
  */
 export function calculateTotalOverdueAmount(payments: PaymentData[]): number {
-  const overduePayments = payments.filter(p => p.status === 'pending' || p.status === 'overdue')
+  const overduePayments = payments.filter(p => p.status === 'overdue')
   
   return overduePayments.reduce((total, payment) => {
     const breakdown = calculatePaymentBreakdown(payment)
@@ -55,7 +55,7 @@ export function calculateTotalOverdueAmount(payments: PaymentData[]): number {
  */
 export function getOverduePayments(payments: PaymentData[]): PaymentData[] {
   return payments
-    .filter(p => p.status === 'pending' || p.status === 'overdue')
+    .filter(p => p.status === 'overdue')
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
 }
 
@@ -70,7 +70,7 @@ export function getNextPayment(payments: PaymentData[]): PaymentData | undefined
  * คำนวณจำนวนงวดที่ค้างชำระ
  */
 export function getOverdueCount(payments: PaymentData[]): number {
-  return payments.filter(p => p.status === 'pending' || p.status === 'overdue').length
+  return payments.filter(p => p.status === 'overdue').length
 }
 
 export function getMinimumPaymentAmount(payments: PaymentData[]): number {

@@ -1,4 +1,5 @@
 import type { Liff } from '@line/liff'
+import { applyLiffStateDeepLinkAfterInit } from '@/lib/liff-state-deeplink'
 
 /**
  * LINE LIFF — desktop / external browser
@@ -15,6 +16,11 @@ let liffInitPromise: Promise<void> | null = null
 
 /** กัน StrictMode / effect ซ้ำเรียก liff.login() สองครั้งก่อน redirect จริง */
 let externalLoginRedirectDispatched = false
+
+function isLocalDevelopmentOrigin(): boolean {
+  if (typeof window === 'undefined') return false
+  return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+}
 
 function getLiffLoginRedirectUri(): string {
   if (typeof window === 'undefined') return ''
@@ -40,7 +46,18 @@ async function getLiff(): Promise<Liff> {
       })
   }
   await liffInitPromise
+  applyLiffStateDeepLinkAfterInit()
   return liff
+}
+
+export async function initializeLiffPrimaryRedirect(): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    await getLiff()
+    return { ok: true }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'LIFF init failed'
+    return { ok: false, message }
+  }
 }
 
 export type LiffBootstrapPayload = { idToken?: string }
@@ -59,8 +76,7 @@ function scheduleExternalLogin(liff: Liff): void {
   const run = () => {
     try {
       liff.login({ redirectUri })
-    } catch (e) {
-      console.error('[LIFF] liff.login failed', e)
+    } catch {
       externalLoginRedirectDispatched = false
     }
   }
@@ -81,6 +97,7 @@ export async function ensureLiffLoggedIn(): Promise<boolean> {
   if (typeof window === 'undefined') return true
   const liffId = import.meta.env.VITE_LIFF_ID as string | undefined
   if (!liffId?.trim()) return true
+  if (isLocalDevelopmentOrigin()) return true
 
   try {
     const liff = await getLiff()
@@ -96,8 +113,7 @@ export async function ensureLiffLoggedIn(): Promise<boolean> {
 
     scheduleExternalLogin(liff)
     return false
-  } catch (e) {
-    console.error('[LIFF] ensureLiffLoggedIn / init failed', e)
+  } catch {
     return true
   }
 }
@@ -106,9 +122,6 @@ export async function getLiffBootstrapResult(): Promise<LiffBootstrapResult> {
   if (typeof window === 'undefined') return { tag: 'missing' }
   const liffId = (import.meta.env.VITE_LIFF_ID as string | undefined)?.trim()
   if (!liffId) {
-    if (import.meta.env.DEV) {
-      console.warn('[LIFF] ตั้ง VITE_LIFF_ID ใน .env เพื่อล็อกอิน LINE บนเบราว์เซอร์')
-    }
     return { tag: 'missing' }
   }
 
@@ -125,7 +138,6 @@ export async function getLiffBootstrapResult(): Promise<LiffBootstrapResult> {
     return { tag: 'ok', idToken }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    console.error('[LIFF] getLiffBootstrapResult', e)
     return { tag: 'init_error', message: msg }
   }
 }

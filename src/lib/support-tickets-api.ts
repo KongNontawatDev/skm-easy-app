@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios'
 import { skmApi, unwrapData } from '@/lib/skm-api'
+import { compressImageForUpload } from '@/lib/image-compression'
 import type { SupportTicket } from '@/features/ticket/types'
 
 export async function fetchMySupportTickets(): Promise<SupportTicket[]> {
@@ -26,8 +27,9 @@ export async function createSupportTicket(body: {
 }
 
 export async function uploadSupportTicketImage(ticketId: string, file: File): Promise<SupportTicket> {
+  const uploadFile = await compressImageForUpload(file)
   const fd = new FormData()
-  fd.append('file', file)
+  fd.append('file', uploadFile)
   const res = await skmApi.post(`/me/support/tickets/${encodeURIComponent(ticketId)}/image`, fd)
   return unwrapData<SupportTicket>(res)
 }

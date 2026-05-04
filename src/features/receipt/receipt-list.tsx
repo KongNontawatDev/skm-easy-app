@@ -8,7 +8,6 @@ import { MobileCard } from '@/components/mobile/mobile-card'
 import { MobileButton } from '@/components/mobile/mobile-button'
 import { BottomNavigation } from '@/components/mobile/bottom-navigation'
 import { Receipt } from 'lucide-react'
-import { getReceiptsByContract, getContractById } from '@/lib/mock-data'
 import { useCustomerToken } from '@/hooks/use-customer-contracts'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import {
@@ -40,21 +39,18 @@ export function ReceiptList() {
     },
   })
 
-  const apiReceipts = useMemo(() => {
-    const filtered = filterReceiptRowsForContract(apiRows ?? [], contractId)
-    return filtered.map((row) => mapReceiptApiRowToReceiptData(row, contractId))
-  }, [apiRows, contractId])
-
   const contractFromApi = useMemo(() => {
     if (!hasToken || !detailRow || Object.keys(detailRow).length === 0) return null
     return mapLegacyContractDetailToContractData(detailRow, contractId)
   }, [hasToken, detailRow, contractId])
 
-  const mockContract = !hasToken ? getContractById(contractId) : undefined
-  const mockReceipts = !hasToken ? getReceiptsByContract(contractId) : []
+  const apiReceipts = useMemo(() => {
+    const filtered = filterReceiptRowsForContract(apiRows ?? [], contractId)
+    return filtered.map((row) => mapReceiptApiRowToReceiptData(row, contractId, contractFromApi))
+  }, [apiRows, contractId, contractFromApi])
 
-  const contract = hasToken ? contractFromApi ?? undefined : mockContract
-  const allReceipts = hasToken ? apiReceipts : mockReceipts
+  const contract = contractFromApi ?? undefined
+  const allReceipts = apiReceipts
   const loading = hasToken && (detailLoading || rowsLoading)
 
   const formatDate = (dateString: string) => {
@@ -99,7 +95,7 @@ export function ReceiptList() {
   return (
     <MobileLayout>
       <MobileHeader title="ใบเสร็จ" />
-      <MobileContent>
+      <MobileContent className="pb-24">
         {loading ? (
           <MobileCard>
             <p className="py-6 text-center text-gray-500">กำลังโหลด...</p>

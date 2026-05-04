@@ -8,6 +8,7 @@ import { showToast } from '@/lib/toast'
 import { clearOtpPending, getOtpPending, patchOtpPending } from '@/lib/auth-pending-otp'
 import { setCustomerTokens } from '@/lib/customer-session'
 import { getLiffIdTokenAndProfileForOtp } from '@/lib/liff-client'
+import { consumePendingLiffStateDeepLink } from '@/lib/liff-state-deeplink'
 import { skmApi, unwrapData } from '@/lib/skm-api'
 import { handleServerError } from '@/lib/handle-server-error'
 import { maskLocalThaiMobile, toLocalThaiMobileDigits, validateLocalThaiMobile } from '@/lib/thai-mobile'
@@ -150,7 +151,7 @@ export function OTP() {
 
       clearOtpPending()
       showToast.success('ยืนยัน OTP สำเร็จ', 'ยินดีต้อนรับสู่ระบบจัดการค่างวดรถ')
-      router.navigate({ to: '/', replace: true })
+      router.navigate({ to: consumePendingLiffStateDeepLink() ?? '/', replace: true } as never)
     } catch (err) {
       handleServerError(err)
       setError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ กรุณาลองใหม่')

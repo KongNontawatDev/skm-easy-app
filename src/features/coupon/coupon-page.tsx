@@ -8,7 +8,14 @@ import {
   MobileButton
 } from '@/components/mobile'
 import { CategoryFilter } from './components/category-filter'
-import { mockCouponCategories } from './data/mock-data'
+import type { CouponCategory } from './types'
+
+const couponCategories: CouponCategory[] = [
+  { id: '1', name: 'ทั้งหมด', icon: '🎫', color: 'bg-gray-50 text-gray-600' },
+  { id: '2', name: 'คูปองของฉัน', icon: '📱', color: 'bg-blue-50 text-blue-600' },
+  { id: '3', name: 'ใช้แล้ว', icon: '✅', color: 'bg-green-50 text-green-600' },
+  { id: '4', name: 'หมดอายุ', icon: '⏰', color: 'bg-red-50 text-red-600' },
+]
 import { useAvailableCoupons, useClaimedCoupons, useUsedCoupons } from './hooks'
 import { QrCode, Clock, CheckCircle, XCircle } from 'lucide-react'
 
@@ -113,7 +120,7 @@ export function Coupon() {
         <div className="space-y-6">
           {/* Category Filter */}
           <CategoryFilter
-            categories={mockCouponCategories}
+            categories={couponCategories}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
           />

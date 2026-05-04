@@ -7,13 +7,14 @@ import {
   MobileButton
 } from '@/components/mobile'
 import { QrCode, Calendar, Users, CheckCircle, XCircle, Clock, MapPin, AlertTriangle } from 'lucide-react'
-import { mockCoupons } from './data/mock-data'
+import type { Coupon } from './types'
 
 export function CouponDetail() {
-  const { id } = useParams({ from: '/coupon/$id' })
+  const { id: _id } = useParams({ from: '/coupon/$id' })
   const router = useRouter()
   
-  const coupon = mockCoupons.find(c => c.id === id)
+  // TODO: เรียกข้อมูลคูปองจาก API จริง
+  const coupon = undefined as Coupon | undefined
 
   if (!coupon) {
     return (

@@ -4,6 +4,9 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import type { ContractCard } from '../types'
 import { cn } from '@/lib/utils'
 
+import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/shared/error-state'
+
 export type ContractCarouselMode = 'home' | 'installment'
 
 export interface ContractCardsCarouselProps {
@@ -14,6 +17,9 @@ export interface ContractCardsCarouselProps {
   scrollToIndex?: number
   /** หน้า installment: contractId ปัจจุบันจาก URL — ใช้กันยิง navigate ซ้ำตอน sync scroll */
   activeContractId?: string
+  isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
 }
 
 const STATUS_CONFIG = {
@@ -55,6 +61,9 @@ export function ContractCardsCarousel({
   mode,
   scrollToIndex = 0,
   activeContractId,
+  isLoading,
+  isError,
+  onRetry,
 }: ContractCardsCarouselProps) {
   const navigate = useNavigate()
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -131,6 +140,26 @@ export function ContractCardsCarousel({
     }, 400)
   }
 
+  if (isLoading) {
+    return (
+      <div className={cn('space-y-3', className)}>
+        <Skeleton className="h-6 w-32" />
+        <div className="flex gap-2 overflow-hidden">
+          <Skeleton className="h-32 min-w-[min(92%,calc(100vw-2.5rem))] rounded-xl" />
+          <Skeleton className="h-32 min-w-[min(92%,calc(100vw-2.5rem))] rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className={cn('py-4', className)}>
+        <ErrorState onRetry={onRetry} />
+      </div>
+    )
+  }
+
   if (contracts.length === 0) {
     return (
       <div className={`p-4 sm:p-6 text-center ${className ?? ''}`}>
@@ -204,8 +233,22 @@ export function ContractCardsCarousel({
                           {contract.contractNumber}
                         </span>
                       </div>
-                      <h4 className="text-gray-900 dark:text-gray-100 text-sm min-[375px]:text-base min-[414px]:text-lg font-bold leading-snug">
-                        {contract.vehicleInfo.brand} {contract.vehicleInfo.model}
+                      <h4 className="text-gray-900 dark:text-gray-100 text-sm min-[375px]:text-base min-[414px]:text-lg font-bold leading-snug w-full overflow-hidden">
+                        {(() => {
+                          const full = contract.vehicleInfo.model.toUpperCase().startsWith(contract.vehicleInfo.brand.toUpperCase())
+                            ? contract.vehicleInfo.model
+                            : `${contract.vehicleInfo.brand} ${contract.vehicleInfo.model}`
+                          if (full.includes('(')) {
+                            const [main, ...rest] = full.split('(')
+                            return (
+                              <>
+                                <span className="block truncate">{main.trim()}</span>
+                                <span className="block text-xs font-normal text-gray-500 truncate">({rest.join('(')}</span>
+                              </>
+                            )
+                          }
+                          return <span className="block truncate">{full}</span>
+                        })()}
                       </h4>
                       <p className="text-gray-500 dark:text-gray-400 text-[10px] min-[375px]:text-[11px] mt-0.5">
                         {contract.vehicleInfo.year} · สี{contract.vehicleInfo.color}

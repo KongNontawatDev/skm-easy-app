@@ -1,0 +1,102 @@
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Error parsing code /settings/privacy-policy import { createFileRoute } from '@tanstack/react-router'
+import { PrivacyPolicy } from '@/features/settings/privacy-policy'
+
+export const Route = createFileRoute('/settings/privacy-policy')({\n  component: PrivacyPolicy,\n})
+ SyntaxError: Expecting Unicode escape sequence \uXXXX. (4:67)
+    at constructor (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:367:19)
+    at TypeScriptParserMixin.raise (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:6630:19)
+    at TypeScriptParserMixin.readWord1 (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:6590:16)
+    at TypeScriptParserMixin.readWord (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:6610:23)
+    at TypeScriptParserMixin.getTokenFromCode (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:6329:14)
+    at TypeScriptParserMixin.getTokenFromCode (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:4830:11)
+    at TypeScriptParserMixin.getTokenFromCode (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10009:11)
+    at TypeScriptParserMixin.nextToken (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:5813:10)
+    at TypeScriptParserMixin.next (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:5723:10)
+    at TypeScriptParserMixin.parseObjectLike (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11825:10)
+    at TypeScriptParserMixin.parseExprAtom (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11343:23)
+    at TypeScriptParserMixin.parseExprAtom (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:4797:20)
+    at TypeScriptParserMixin.parseExprSubscripts (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11085:23)
+    at TypeScriptParserMixin.parseUpdate (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11070:21)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11050:23)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9857:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10903:61)
+    at TypeScriptParserMixin.parseExprOps (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10908:23)
+    at TypeScriptParserMixin.parseMaybeConditional (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10885:23)
+    at TypeScriptParserMixin.parseMaybeAssign (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10835:21)
+    at TypeScriptParserMixin.parseMaybeAssign (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9806:20)
+    at D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10804:39
+    at TypeScriptParserMixin.allowInAnd (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12436:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10804:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12503:17)
+    at TypeScriptParserMixin.parseExprListItem (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12185:18)
+    at TypeScriptParserMixin.parseCallExpressionArguments (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11256:22)
+    at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11190:29)
+    at TypeScriptParserMixin.parseSubscript (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11124:19)
+    at TypeScriptParserMixin.parseSubscript (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9358:18)
+    at TypeScriptParserMixin.parseSubscripts (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11098:19)
+    at TypeScriptParserMixin.parseExprSubscripts (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11089:17)
+    at TypeScriptParserMixin.parseUpdate (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11070:21)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:11050:23)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9857:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10903:61)
+    at TypeScriptParserMixin.parseExprOps (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10908:23)
+    at TypeScriptParserMixin.parseMaybeConditional (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10885:23)
+    at TypeScriptParserMixin.parseMaybeAssign (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10835:21)
+    at TypeScriptParserMixin.parseMaybeAssign (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9806:20)
+    at D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10804:39
+    at TypeScriptParserMixin.allowInAnd (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12431:16)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:10804:17)
+    at TypeScriptParserMixin.parseVar (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:13393:91)
+    at TypeScriptParserMixin.parseVarStatement (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:13239:10)
+    at TypeScriptParserMixin.parseVarStatement (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9498:31)
+    at TypeScriptParserMixin.parseStatementContent (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12860:23)
+    at TypeScriptParserMixin.parseStatementContent (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:9532:18)
+    at TypeScriptParserMixin.parseStatementLike (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12776:17)
+    at TypeScriptParserMixin.parseStatementListItem (D:\dev\skm-easy\skm-easy-app\node_modules\@babel\parser\lib\index.js:12756:17) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'MissingUnicodeEscape',
+  loc: Position { line: 4, column: 67, index: 195 },
+  pos: 195,
+  syntaxPlugin: undefined
+}
+Error: Error transforming route file D:/dev/skm-easy/skm-easy-app/src/routes/settings/privacy-policy.tsx: SyntaxError: Expecting Unicode escape sequence \uXXXX. (4:67)
+    at file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-generator/dist/esm/generator.js:141:19
+    at async generate (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:41:7)
+    at async PluginContext.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:51:7)
+    at async Promise.all (index 1)
+    at async EnvironmentPluginContainer.hookParallel (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:30848:3)
+    at async EnvironmentPluginContainer.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:31007:3)
+    at async onFileAddUnlink (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:28206:3)
+Error: EPERM: operation not permitted, rename 'D:\dev\skm-easy\skm-easy-app\.tanstack\tmp\45123e5c-40c742056ba806b2a97776ac7e9fcd4c' -> 'D:\dev\skm-easy\skm-easy-app\src\routeTree.gen.ts'
+    at file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-generator/dist/esm/generator.js:141:19
+    at async generate (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:41:7)
+    at async PluginContext.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:51:7)
+    at async Promise.all (index 1)
+    at async EnvironmentPluginContainer.hookParallel (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:30848:3)
+    at async EnvironmentPluginContainer.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:31007:3)
+    at async FSWatcher.<anonymous> (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:28224:3)
+Error: ENOENT: no such file or directory, stat 'D:\dev\skm-easy\skm-easy-app\src\routeTree.gen.ts'
+    at file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-generator/dist/esm/generator.js:141:19
+    at async generate (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:41:7)
+    at async PluginContext.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:51:7)
+    at async Promise.all (index 1)
+    at async EnvironmentPluginContainer.hookParallel (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:30848:3)
+    at async EnvironmentPluginContainer.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:31007:3)
+    at async onFileAddUnlink (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:28206:3)
+Error: EPERM: operation not permitted, rename 'D:\dev\skm-easy\skm-easy-app\.tanstack\tmp\45123e5c-40c742056ba806b2a97776ac7e9fcd4c' -> 'D:\dev\skm-easy\skm-easy-app\src\routeTree.gen.ts'
+    at file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-generator/dist/esm/generator.js:141:19
+    at async generate (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:41:7)
+    at async PluginContext.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:51:7)
+    at async Promise.all (index 1)
+    at async EnvironmentPluginContainer.hookParallel (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:30848:3)
+    at async EnvironmentPluginContainer.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:31007:3)
+    at async FSWatcher.<anonymous> (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:28224:3)
+Error: EPERM: operation not permitted, rename 'D:\dev\skm-easy\skm-easy-app\.tanstack\tmp\a3343e52-40c742056ba806b2a97776ac7e9fcd4c' -> 'D:\dev\skm-easy\skm-easy-app\src\routeTree.gen.ts'
+    at file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-generator/dist/esm/generator.js:141:19
+    at async generate (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:41:7)
+    at async PluginContext.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/@tanstack/router-plugin/dist/esm/core/router-generator-plugin.js:51:7)
+    at async Promise.all (index 1)
+    at async EnvironmentPluginContainer.hookParallel (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:30848:3)
+    at async EnvironmentPluginContainer.watchChange (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:31007:3)
+    at async FSWatcher.<anonymous> (file:///D:/dev/skm-easy/skm-easy-app/node_modules/vite/dist/node/chunks/dep-Bm2ujbhY.js:28224:3)

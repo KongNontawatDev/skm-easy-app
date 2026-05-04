@@ -10,6 +10,7 @@ import {
 import { useNotificationReadUpdates } from './hooks/use-notification-read-updates'
 import { useCustomerToken } from '@/hooks/use-customer-contracts'
 import { fetchCustomerNotifications, markCustomerNotificationReadOnServer } from '@/lib/customer-notifications'
+import { openNotificationAction } from '@/lib/notification-actions'
 
 export function NotificationDetail() {
   const router = useRouter()
@@ -263,19 +264,35 @@ export function NotificationDetail() {
             </div>
           )}
 
-          {notification.actionUrl && notification.actionText && (
-            <MobileButton
-              className='flex h-12 w-full items-center justify-center'
-              onClick={() => {
-                markNotificationAsRead(notification.id)
-                markCustomerNotificationReadOnServer(notification.id)
-                router.navigate({ to: notification.actionUrl! })
-              }}
-            >
-              <ArrowRight className='mr-2 h-4 w-4' />
-              {notification.actionText}
-            </MobileButton>
-          )}
+          <div className='flex flex-col gap-3'>
+            {notification.actionUrl1 && notification.actionText1 && (
+              <MobileButton
+                className='flex h-12 w-full items-center justify-center'
+                onClick={() => {
+                  markNotificationAsRead(notification.id)
+                  markCustomerNotificationReadOnServer(notification.id)
+                  openNotificationAction(notification.actionUrl1!, router.navigate)
+                }}
+              >
+                <ArrowRight className='mr-2 h-4 w-4' />
+                {notification.actionText1}
+              </MobileButton>
+            )}
+            {notification.actionUrl2 && notification.actionText2 && (
+              <MobileButton
+                variant='outline'
+                className='flex h-12 w-full items-center justify-center'
+                onClick={() => {
+                  markNotificationAsRead(notification.id)
+                  markCustomerNotificationReadOnServer(notification.id)
+                  openNotificationAction(notification.actionUrl2!, router.navigate)
+                }}
+              >
+                <ArrowRight className='mr-2 h-4 w-4' />
+                {notification.actionText2}
+              </MobileButton>
+            )}
+          </div>
         </div>
       </MobileContent>
       <BottomNavigation currentPath='/notification' />

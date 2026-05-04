@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import type { Notification } from '../types'
 import { markNotificationAsRead } from '../notification-read-state'
 import { markCustomerNotificationReadOnServer } from '@/lib/customer-notifications'
+import { openNotificationAction } from '@/lib/notification-actions'
 
 interface NotificationCardProps {
   notification: Notification
@@ -112,21 +113,36 @@ export function NotificationCard({ notification, isRead }: NotificationCardProps
         </div>
       </Link>
 
-      {notification.actionUrl && notification.actionText && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
-          <button
-            type="button"
-            aria-label={`${notification.actionText} — ${notification.title}`}
-            className="flex w-full items-center justify-end gap-1 px-4 py-2.5 text-xs font-medium text-[#EC1B2E] transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-            onClick={() => {
-              markNotificationAsRead(notification.id)
-              markCustomerNotificationReadOnServer(notification.id)
-              navigate({ to: notification.actionUrl! })
-            }}
-          >
-            <span>{notification.actionText}</span>
-            <ArrowRight className="h-3 w-3" />
-          </button>
+      {(notification.actionUrl1 || notification.actionUrl2) && (
+        <div className="flex divide-x border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
+          {notification.actionUrl1 && notification.actionText1 && (
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-1 py-3 text-xs font-semibold text-[#EC1B2E] transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-gray-700/50"
+              onClick={() => {
+                markNotificationAsRead(notification.id)
+                markCustomerNotificationReadOnServer(notification.id)
+                openNotificationAction(notification.actionUrl1!, navigate)
+              }}
+            >
+              <span>{notification.actionText1}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {notification.actionUrl2 && notification.actionText2 && (
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-1 py-3 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 active:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50"
+              onClick={() => {
+                markNotificationAsRead(notification.id)
+                markCustomerNotificationReadOnServer(notification.id)
+                openNotificationAction(notification.actionUrl2!, navigate)
+              }}
+            >
+              <span>{notification.actionText2}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
     </div>

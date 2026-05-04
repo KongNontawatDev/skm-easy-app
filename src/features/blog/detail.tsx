@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   MobileLayout,
@@ -8,15 +9,26 @@ import {
 import { Calendar } from 'lucide-react'
 import { useParams } from '@tanstack/react-router'
 import { fetchPublicArticleById } from '@/lib/cms-public-api'
+import { useMarkArticleViewed } from '@/features/home/hooks/useMutation'
 
 export function BlogDetail() {
   const { id } = useParams({ from: '/blog/$id' })
+  const markArticleViewed = useMarkArticleViewed()
 
   const { data: post, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['public-article', id],
     queryFn: () => fetchPublicArticleById(id),
     enabled: !!id,
   })
+
+  // Track view when article is loaded
+  useEffect(() => {
+    if (post && id) {
+      markArticleViewed.mutate(id)
+    }
+    // We only want to track view once per article load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, !!post])
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—'
@@ -68,7 +80,7 @@ export function BlogDetail() {
       <MobileHeader title="รายละเอียดบทความ" />
       <MobileContent className="pb-20">
         <div className="space-y-6">
-          <div className="relative h-64 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-700">
+          <div className="relative aspect-[1200/630] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-700">
             {post.coverImageUrl ? (
               <img src={post.coverImageUrl} alt={post.title} className="h-full w-full object-cover" />
             ) : null}
@@ -83,7 +95,7 @@ export function BlogDetail() {
             </div>
 
             <div
-              className="prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
+              className="cms-rich-content prose prose-sm max-w-none text-gray-800 dark:prose-invert dark:text-gray-200"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           </div>

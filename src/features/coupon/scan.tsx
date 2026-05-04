@@ -7,7 +7,10 @@ import {
   MobileButton
 } from '@/components/mobile'
 import { QrCode, Camera, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
-import { mockStores } from './data/mock-data'
+import type { Store } from './types'
+
+// TODO: โหลดข้อมูลร้านจาก API จริง
+const stores: Store[] = []
 
 export function CouponScan() {
   const [isScanning, setIsScanning] = useState(false)
@@ -34,7 +37,7 @@ export function CouponScan() {
       setScannedCode(mockScannedCode)
       
       // หาร้านจาก QR Code
-      const store = mockStores.find(s => s.qrCode === mockScannedCode)
+      const store = stores.find(s => s.qrCode === mockScannedCode)
       
       if (store) {
         setScanResult({
@@ -190,7 +193,7 @@ export function CouponScan() {
           <div className="bg-white rounded-2xl p-4">
             <h3 className="font-semibold text-gray-900 mb-4">ร้านที่เข้าร่วม</h3>
             <div className="space-y-3">
-              {mockStores.map((store) => (
+              {stores.map((store) => (
                 <div key={store.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <div>
                     <h4 className="font-medium text-gray-900">{store.name}</h4>

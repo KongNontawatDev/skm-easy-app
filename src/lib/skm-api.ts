@@ -1,10 +1,17 @@
 /**
- * 📌 Axios หลักสำหรับเรียก skm-easy-api-v2 — แนบ access token + ลอง refresh เมื่อ 401
+ * 📌 Axios หลักสำหรับเรียก skm-easy-api-v3 — แนบ access token + ลอง refresh เมื่อ 401
  */
 import axios, { isAxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
-import { clearCustomerSession, setCustomerAccessToken, getCustomerRefreshToken } from '@/lib/customer-session'
+import {
+  clearCustomerSession,
+  getCustomerAccessToken,
+  getCustomerRefreshToken,
+  isCustomerAccessTokenValid,
+  setCustomerTokens,
+  setCustomerAccessToken,
+} from '@/lib/customer-session'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://i2c20wv92gd8pqui6lxq7qq2.204.168.204.48.sslip.io/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1'
 
 /** ngrok free อาจคืนหน้าเตือน HTML แทน JSON — ส่ง header นี้เพื่อข้ามและได้ response จริงของ API */
 function isNgrokTunnelApiUrl(url: string): boolean {
@@ -16,12 +23,28 @@ const ngrokSkipHeaders =
     ? ({ 'ngrok-skip-browser-warning': 'true' } as const)
     : undefined
 
-export const skmApi = axios.create({ baseURL })
+export const skmApi = axios.create({
+  baseURL,
+  headers: {
+    'X-Client-App': 'skm-easy-app',
+  },
+})
+const JWT_ROLLING_RENEW_THRESHOLD_SEC = 30 * 24 * 60 * 60
 
-skmApi.interceptors.request.use((config) => {
-  const t = localStorage.getItem('skm_access_token')
-  if (t) {
-    config.headers.Authorization = `Bearer ${t}`
+function isCustomerRefreshBypassUrl(url: string): boolean {
+  return url.includes('/auth/customer/refresh') || url.includes('/auth/customer/otp/')
+}
+
+skmApi.interceptors.request.use(async (config) => {
+  const url = String(config.url ?? '')
+  let accessToken = getCustomerAccessToken()
+
+  if (!isCustomerRefreshBypassUrl(url) && !isCustomerAccessTokenValid(JWT_ROLLING_RENEW_THRESHOLD_SEC)) {
+    accessToken = await refreshCustomerAccess()
+  }
+
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`
   }
   if (ngrokSkipHeaders) {
     Object.assign(config.headers, ngrokSkipHeaders)
@@ -39,14 +62,18 @@ async function refreshCustomerAccess(): Promise<string | null> {
   if (!rt) return null
   refreshInFlight = (async () => {
     try {
-      const res = await axios.post<ApiEnvelope<{ accessToken: string }>>(
+      const res = await axios.post<ApiEnvelope<{ accessToken: string; refreshToken?: string }>>(
         `${baseURL.replace(/\/$/, '')}/auth/customer/refresh`,
         { refreshToken: rt },
-        { headers: ngrokSkipHeaders ? { ...ngrokSkipHeaders } : undefined },
+        { headers: { 'X-Client-App': 'skm-easy-app', ...(ngrokSkipHeaders ?? {}) } },
       )
-      const body = res.data as ApiEnvelope<{ accessToken: string }>
+      const body = res.data as ApiEnvelope<{ accessToken: string; refreshToken?: string }>
       if (!body.success || !body.data?.accessToken) return null
-      setCustomerAccessToken(body.data.accessToken)
+      if (body.data.refreshToken) {
+        setCustomerTokens(body.data.accessToken, body.data.refreshToken)
+      } else {
+        setCustomerAccessToken(body.data.accessToken)
+      }
       return body.data.accessToken
     } catch {
       return null
@@ -67,7 +94,7 @@ skmApi.interceptors.response.use(
     const cfg = err.config
     if (status !== 401 || !cfg || cfg._skmRetry) return Promise.reject(error)
     const url = String(cfg.url ?? '')
-    if (url.includes('/auth/customer/refresh') || url.includes('/auth/customer/otp/')) {
+    if (isCustomerRefreshBypassUrl(url)) {
       return Promise.reject(error)
     }
     const newAccess = await refreshCustomerAccess()

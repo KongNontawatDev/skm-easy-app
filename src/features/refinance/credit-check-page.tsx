@@ -10,7 +10,6 @@ import {
 import { LoadingSpinner, EmptyState } from '@/components/shared'
 import { CreditCheckForm } from './components/credit-check-form'
 import { useCreditCheckResults } from './hooks'
-import { mockCreditCheckResults } from './data/mock-data'
 import { Badge } from '@/components/ui/badge'
 import {
   CheckCircle,
@@ -21,7 +20,7 @@ import {
   TrendingUp,
   Shield,
 } from 'lucide-react'
-import type { CreditCheckResponse } from './types'
+import type { CreditCheckResponse, CreditCheckResult } from './types'
 
 export function CreditCheckPage() {
   const [showForm, setShowForm] = useState(false)
@@ -29,8 +28,8 @@ export function CreditCheckPage() {
   
   const { isLoading, error } = useCreditCheckResults()
 
-  // Use mock data for now
-  const displayResults = mockCreditCheckResults
+  // TODO: โหลดข้อมูลจาก API จริง
+  const displayResults: CreditCheckResult[] = []
 
   const handleFormSuccess = (response: CreditCheckResponse) => {
     setCheckResult(response)

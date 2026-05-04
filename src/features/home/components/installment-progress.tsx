@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar, CheckCircle, Clock } from 'lucide-react'
 import { MobileCard } from '@/components/mobile'
 
+import { Skeleton } from '@/components/ui/skeleton'
+
 type InstallmentProgressProps = {
   totalAmount: number
   paidAmount: number
@@ -11,7 +13,9 @@ type InstallmentProgressProps = {
   installmentIndex: number
   /** จำนวนงวดทั้งหมด */
   totalInstallments: number
+  nextAmount?: number
   className?: string
+  isLoading?: boolean
 }
 
 const KNOB_WIDTH = 40
@@ -23,7 +27,9 @@ export function InstallmentProgress({
   nextDueDate,
   installmentIndex,
   totalInstallments,
-  className
+  nextAmount,
+  className,
+  isLoading,
 }: InstallmentProgressProps) {
   const {
     doneInstallments,
@@ -93,6 +99,28 @@ export function InstallmentProgress({
 
   const showTicks = total > 1 && total <= 18
   const ticks = showTicks ? Array.from({ length: total + 1 }, (_, i) => i) : []
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={className}
+      >
+        <MobileCard className="p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="h-5 w-full rounded-full" />
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </MobileCard>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
@@ -217,7 +245,7 @@ export function InstallmentProgress({
           </div>
           <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
             <Clock className="h-3 w-3" />
-            คืบหน้า {instPct}%
+            ค่างวด: {nextAmount ? nextAmount.toLocaleString('th-TH') : '0'} บาท
           </div>
         </div>
 

@@ -61,24 +61,12 @@ export function SignIn() {
   const HCAPTCHA_SITE_KEY = '14aee74e-f122-4974-b2f2-0d8cfbc08a86'
 
   const validateNationalId = (id: string) => {
-    // Remove all non-digits
     const cleanId = id.replace(/\D/g, '')
-    
-    if (cleanId.length !== 13) {
-      return 'เลขบัตรประชาชนต้องมี 13 หลัก'
+
+    if (cleanId.length < 10 || cleanId.length > 14) {
+      return 'เลขอ้างอิงต้องมี 10-14 หลัก'
     }
-    
-    // Thai National ID validation algorithm
-    let sum = 0
-    for (let i = 0; i < 12; i++) {
-      sum += parseInt(cleanId[i]) * (13 - i)
-    }
-    const checkDigit = (11 - (sum % 11)) % 10
-    
-    if (parseInt(cleanId[12]) !== checkDigit) {
-      return 'เลขบัตรประชาชนไม่ถูกต้อง'
-    }
-    
+
     return ''
   }
 
@@ -162,15 +150,7 @@ export function SignIn() {
   }
 
   const formatNationalId = (value: string) => {
-    // Remove all non-digits
-    const cleanValue = value.replace(/\D/g, '')
-    
-    // Format as X-XXXX-XXXXX-XX-X
-    if (cleanValue.length <= 1) return cleanValue
-    if (cleanValue.length <= 5) return `${cleanValue.slice(0, 1)}-${cleanValue.slice(1)}`
-    if (cleanValue.length <= 10) return `${cleanValue.slice(0, 1)}-${cleanValue.slice(1, 5)}-${cleanValue.slice(5)}`
-    if (cleanValue.length <= 12) return `${cleanValue.slice(0, 1)}-${cleanValue.slice(1, 5)}-${cleanValue.slice(5, 10)}-${cleanValue.slice(10)}`
-    return `${cleanValue.slice(0, 1)}-${cleanValue.slice(1, 5)}-${cleanValue.slice(5, 10)}-${cleanValue.slice(10, 12)}-${cleanValue.slice(12, 13)}`
+    return value.replace(/\D/g, '').slice(0, 14)
   }
 
   const formatPhoneNumber = (value: string) => {
@@ -189,7 +169,7 @@ export function SignIn() {
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">ยืนยันตัวตนกับร้าน</h1>
         <p className="text-gray-600 text-sm leading-relaxed px-1">
-          คุณเข้าสู่ระบบด้วย LINE แล้ว — กรุณากรอกเลขบัตรประชาชนและเบอร์โทรให้ตรงกับข้อมูลที่ร้านมี
+          คุณเข้าสู่ระบบด้วย LINE แล้ว — กรุณากรอกเลขบัตร/เลขผู้เสียภาษีและเบอร์โทรให้ตรงกับข้อมูลที่ร้านมี
           เพื่อแมปบัญชี LINE ของคุณ (ครั้งแรกเท่านั้น)
         </p>
       </div>
@@ -197,19 +177,19 @@ export function SignIn() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">เลขบัตรประชาชน</label>
+          <label className="text-sm font-medium text-gray-700">เลขบัตร / เลขผู้เสียภาษี</label>
           <div className="relative">
             <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <MobileInput
               type="text"
-              placeholder="กรอกเลขบัตรประชาชน 13 หลัก"
+              placeholder="กรอกเลขอ้างอิง 10-14 หลัก"
               value={formData.nationalId}
               onChange={(e) => {
                 const formatted = formatNationalId(e.target.value)
                 handleInputChange('nationalId', formatted)
               }}
               className="pl-10"
-              maxLength={17} // X-XXXX-XXXXX-XX-X format
+              maxLength={14}
               required
             />
           </div>

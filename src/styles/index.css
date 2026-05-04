@@ -140,6 +140,121 @@
   @apply after:pointer-events-none after:absolute after:start-0 after:bottom-0 after:hidden after:h-32 after:w-full after:rounded-b-2xl after:bg-[linear-gradient(180deg,_transparent_10%,_var(--background)_70%)] md:after:block;
 }
 
+.cms-rich-content {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.cms-rich-content p {
+  margin: 0.45em 0;
+}
+
+.cms-rich-content p:empty::before {
+  content: '\00a0';
+}
+
+.cms-rich-content p:has(> br:only-child) {
+  min-height: 1.45em;
+}
+
+.cms-rich-content h1,
+.cms-rich-content h2,
+.cms-rich-content h3 {
+  color: inherit;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0.85em 0 0.35em;
+}
+
+.cms-rich-content h1 {
+  font-size: 1.35rem;
+}
+
+.cms-rich-content h2 {
+  font-size: 1.2rem;
+}
+
+.cms-rich-content h3 {
+  font-size: 1.08rem;
+}
+
+.cms-rich-content ul,
+.cms-rich-content ol {
+  margin: 0.5em 0;
+  padding-inline-start: 1.35rem;
+}
+
+.cms-rich-content ul {
+  list-style: disc;
+}
+
+.cms-rich-content ol {
+  list-style: decimal;
+}
+
+.cms-rich-content li {
+  margin: 0.25em 0;
+}
+
+.cms-rich-content blockquote {
+  border-inline-start: 4px solid #EC1B2E;
+  color: rgb(75 85 99);
+  margin: 0.85em 0;
+  padding: 0.25em 0 0.25em 0.9rem;
+}
+
+.dark .cms-rich-content blockquote {
+  color: rgb(209 213 219);
+}
+
+.cms-rich-content img {
+  border-radius: 0.75rem;
+  height: auto;
+  margin: 0.75em 0;
+  max-width: 100%;
+}
+
+.cms-rich-content img[data-align='center'] {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cms-rich-content img[data-align='right'] {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.cms-rich-content pre {
+  background: rgb(243 244 246);
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  margin: 0.75em 0;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.dark .cms-rich-content pre {
+  background: rgb(31 41 55);
+}
+
+.cms-rich-content code {
+  background: rgb(243 244 246);
+  border-radius: 0.35rem;
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+}
+
+.dark .cms-rich-content code {
+  background: rgb(31 41 55);
+}
+
+.cms-rich-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
 /* styles.css */
 .CollapsibleContent {
   overflow: hidden;

@@ -53,7 +53,11 @@ export function Settings() {
                   </button>
                 </p>
               ) : null}
-              <MobileButton variant="ghost" className="w-full justify-between h-auto p-0">
+              <MobileButton 
+                variant="ghost" 
+                className="w-full justify-between h-auto p-0"
+                onClick={() => void navigate({ to: '/settings/privacy-policy' })}
+              >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
                     <Shield className="h-5 w-5 text-orange-600" />

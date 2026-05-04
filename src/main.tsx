@@ -25,6 +25,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
+        // Query flow: pages/hooks request data through React Query; auth/server errors stop retry early.
         if (import.meta.env.DEV) return false
         if (failureCount > 3 && import.meta.env.PROD) return false
 
@@ -50,6 +51,7 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error) => {
+      // Global query errors are presentation-only here; axios interceptors handle auth refresh/redirect.
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
           toast.error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่')
@@ -72,6 +74,7 @@ const queryClient = new QueryClient({
 
 // Create a new router instance
 const router = createRouter({
+  // Router input is generated routeTree; output is typed navigation + route context with queryClient.
   routeTree,
   context: { queryClient },
   defaultPreload: 'intent',
@@ -107,6 +110,7 @@ if (typeof window !== 'undefined') {
 
 const root = ReactDOM.createRoot(rootElement)
 root.render(
+  // Provider order matters: ErrorBoundary catches render failures, then query/theme/font/direction/toast context wrap routes.
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

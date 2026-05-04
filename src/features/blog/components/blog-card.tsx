@@ -30,7 +30,7 @@ export function BlogCard({ post, onViewDetail }: BlogCardProps) {
         }
       }}
     >
-      <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
+      <div className="relative aspect-[1200/630] overflow-hidden bg-gray-100 dark:bg-gray-700">
         {post.coverImageUrl ? (
           <img
             src={post.coverImageUrl}
